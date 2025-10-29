@@ -1,10 +1,9 @@
-🔧 [Github](https://github.com/pnnbao97/VieNeu-TTS)
+[Github](https://github.com/pnnbao97/VieNeu-TTS)
 **VieNeu-TTS** là mô hình Text-to-Speech (TTS) tiếng Việt đầu tiên chạy trên thiết bị cá nhân với khả năng nhân bản giọng nói tức thì. Được fine-tune từ [NeuTTS Air](https://huggingface.co/neuphonic/neutts-air), VieNeu-TTS mang đến giọng nói tiếng Việt tự nhiên, siêu chân thực với hiệu suất thời gian thực trên CPU.
 
 Dựa trên backbone Qwen 0.5B LLM, VieNeu-TTS kết hợp giữa tốc độ, kích thước nhỏ gọn và chất lượng âm thanh cao - hoàn hảo cho các ứng dụng voice agent, trợ lý ảo, đồ chơi tương tác và các ứng dụng yêu cầu bảo mật cao chạy trên thiết bị local.
 
 Tác giả: Phạm Nguyễn Ngọc Bảo
-Fb: https://www.facebook.com/bao.phamnguyenngoc.5
 
 ## Chi tiết mô hình
 
@@ -99,3 +98,63 @@ for i, text in enumerate(input_texts, 1):
     sf.write(output_path, wav, 24000)
     print(f"Saved to {output_path}")
 ```
+### Khuyến cáo
+
+Vui lòng không sử dụng mô hình này cho mục đích xấu hoặc vi phạm pháp luật, bao gồm:
+
+- Mạo danh giọng nói người khác mà không có sự đồng ý
+- Tạo nội dung sai sự thật, lừa đảo
+- Vi phạm quyền riêng tư hoặc quyền sở hữu trí tuệ
+- Các hành vi vi phạm pháp luật khác
+
+Hãy tôn trọng quyền riêng tư và quyền sở hữu trí tuệ của người khác.
+
+## Giới hạn
+
+- Mô hình có thể không phát âm chính xác 100% các từ tiếng Việt phức tạp hoặc từ vựng chuyên ngành
+- Chất lượng đầu ra phụ thuộc nhiều vào chất lượng của audio tham chiếu
+- Hiệu suất có thể giảm với văn bản quá dài (khuyến nghị chia nhỏ văn bản dài)
+
+## License
+
+Apache 2.0
+
+## Trích dẫn
+
+Nếu bạn sử dụng VieNeu-TTS trong nghiên cứu hoặc ứng dụng của mình, vui lòng trích dẫn:
+
+```bibtex
+@misc{vieneutts2025,
+  title={VieNeu-TTS: Vietnamese Text-to-Speech with Instant Voice Cloning},
+  author={Pham Ngoc Nhat Bao},
+  year={2025},
+  publisher={Hugging Face},
+  howpublished={\url{https://huggingface.co/pnnbao-ump/VieNeu-TTS}}
+}
+```
+
+Và base model NeuTTS Air:
+
+```bibtex
+@misc{neuttsair2025,
+  title={NeuTTS Air: On-Device Speech Language Model with Instant Voice Cloning},
+  author={Neuphonic},
+  year={2025},
+  publisher={Hugging Face},
+  howpublished={\url{https://huggingface.co/neuphonic/neutts-air}}
+}
+```
+
+## Liên hệ
+
+- **GitHub**: [pnnbao97](https://github.com/pnnbao97)
+- **Hugging Face**: [pnnbao-ump](https://huggingface.co/pnnbao-ump)
+- **Facebook**: [Phạm Nguyễn Ngọc Bảo](https://www.facebook.com/bao.phamnguyenngoc.5)
+
+## Ghi nhận
+
+Dự án này được xây dựng dựa trên [NeuTTS Air](https://huggingface.co/neuphonic/neutts-air) của Neuphonic. Xin gửi lời cảm ơn chân thành đến đội ngũ Neuphonic đã tạo ra mô hình base xuất sắc này và công khai cho cộng đồng.
+
+---
+
+**Lưu ý**: Đây là phiên bản nghiên cứu và thử nghiệm. Vui lòng báo cáo các vấn đề hoặc đóng góp cải tiến qua GitHub Issues.
