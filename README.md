@@ -126,7 +126,7 @@ Nếu bạn sử dụng VieNeu-TTS trong nghiên cứu hoặc ứng dụng của
 ```bibtex
 @misc{vieneutts2025,
   title={VieNeu-TTS: Vietnamese Text-to-Speech with Instant Voice Cloning},
-  author={Pham Ngoc Nhat Bao},
+  author={Pham Nguyen Ngoc Bao},
   year={2025},
   publisher={Hugging Face},
   howpublished={\url{https://huggingface.co/pnnbao-ump/VieNeu-TTS}}
@@ -158,3 +158,4 @@ Dự án này được xây dựng dựa trên [NeuTTS Air](https://huggingface.
 ---
 
 **Lưu ý**: Đây là phiên bản nghiên cứu và thử nghiệm. Vui lòng báo cáo các vấn đề hoặc đóng góp cải tiến qua GitHub Issues.
+
