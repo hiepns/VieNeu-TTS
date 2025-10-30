@@ -3,7 +3,7 @@
 [![Github](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/pnnbao97/VieNeu-TTS)
 [![Hugging Face](https://img.shields.io/badge/Hugging%20Face-Model-yellow)](https://huggingface.co/pnnbao-ump/VieNeu-TTS)
 
-<img width="600" height="595" alt="image" src="https://github.com/user-attachments/assets/66c098c4-d184-4e7a-826a-ba8c6c556fab" />
+[<img width="600" height="595" alt="image" src="https://github.com/user-attachments/assets/66c098c4-d184-4e7a-826a-ba8c6c556fab" />](https://github.com/user-attachments/assets/5ad53bc9-e816-41a7-9474-ea470b1cbfdd)
 
 **VieNeu-TTS** là mô hình Text-to-Speech (TTS) tiếng Việt đầu tiên chạy trên thiết bị cá nhân với khả năng nhân bản giọng nói tức thì. Được fine-tune từ [NeuTTS Air](https://huggingface.co/neuphonic/neutts-air), VieNeu-TTS mang đến giọng nói tiếng Việt tự nhiên, siêu chân thực với hiệu suất thời gian thực trên CPU.
 
@@ -330,6 +330,7 @@ Nếu bạn gặp vấn đề hoặc có câu hỏi:
 ---
 
 **Made with ❤️ for Vietnamese TTS community**
+
 
 
 
