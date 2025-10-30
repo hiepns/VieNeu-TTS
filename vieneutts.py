@@ -9,13 +9,36 @@ from phonemizer.backend.espeak.espeak import EspeakWrapper
 from phonemizer import phonemize
 import platform
 import re
+import os
 
 if platform.system() == "Windows":
     EspeakWrapper.set_library(r"C:\Program Files\eSpeak NG\libespeak-ng.dll")
 elif platform.system() == "Linux":
     EspeakWrapper.set_library("/usr/lib/x86_64-linux-gnu/libespeak-ng.so")
+elif platform.system() == "Darwin":  # macOS
+    # Check environment variable first
+    espeak_lib = os.environ.get('PHONEMIZER_ESPEAK_LIBRARY')
+    
+    if espeak_lib and os.path.exists(espeak_lib):
+        EspeakWrapper.set_library(espeak_lib)
+    # Try common paths for Apple Silicon
+    elif os.path.exists("/opt/homebrew/lib/libespeak-ng.dylib"):
+        EspeakWrapper.set_library("/opt/homebrew/lib/libespeak-ng.dylib")
+    # Try common paths for Intel Mac
+    elif os.path.exists("/usr/local/lib/libespeak-ng.dylib"):
+        EspeakWrapper.set_library("/usr/local/lib/libespeak-ng.dylib")
+    # Try MacPorts path
+    elif os.path.exists("/opt/local/lib/libespeak-ng.dylib"):
+        EspeakWrapper.set_library("/opt/local/lib/libespeak-ng.dylib")
+    else:
+        raise ValueError(
+            "Could not find libespeak-ng.dylib. Please:\n"
+            "1. Install via: brew install espeak\n"
+            "2. Or set environment variable: export PHONEMIZER_ESPEAK_LIBRARY=/path/to/libespeak-ng.dylib\n"
+            "3. Check installation path with: brew info espeak"
+        )
 else:
-    raise ValueError(f"Please set the espeak library path for your platform.")
+    raise ValueError(f"Unsupported platform: {platform.system()}. Please set the espeak library path manually.")
 
 def _linear_overlap_add(frames: list[np.ndarray], stride: int) -> np.ndarray:
     # original impl --> https://github.com/facebookresearch/encodec/blob/main/encodec/utils.py
