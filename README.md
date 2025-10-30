@@ -1,9 +1,22 @@
-[Github](https://github.com/pnnbao97/VieNeu-TTS)
+# VieNeu-TTS
+
+[![Github](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/pnnbao97/VieNeu-TTS)
+[![Hugging Face](https://img.shields.io/badge/Hugging%20Face-Model-yellow)](https://huggingface.co/pnnbao-ump/VieNeu-TTS)
+
 **VieNeu-TTS** là mô hình Text-to-Speech (TTS) tiếng Việt đầu tiên chạy trên thiết bị cá nhân với khả năng nhân bản giọng nói tức thì. Được fine-tune từ [NeuTTS Air](https://huggingface.co/neuphonic/neutts-air), VieNeu-TTS mang đến giọng nói tiếng Việt tự nhiên, siêu chân thực với hiệu suất thời gian thực trên CPU.
 
 Dựa trên backbone Qwen 0.5B LLM, VieNeu-TTS kết hợp giữa tốc độ, kích thước nhỏ gọn và chất lượng âm thanh cao - hoàn hảo cho các ứng dụng voice agent, trợ lý ảo, đồ chơi tương tác và các ứng dụng yêu cầu bảo mật cao chạy trên thiết bị local.
 
-Tác giả: Phạm Nguyễn Ngọc Bảo
+**Tác giả**: Phạm Nguyễn Ngọc Bảo
+
+## ✨ Tính năng
+
+- 🎙️ **Tổng hợp giọng nói tiếng Việt tự nhiên** với chất lượng cao (24kHz)
+- 🚀 **Voice Cloning tức thì** - chỉ cần một đoạn audio mẫu ngắn
+- 💻 **Chạy trên thiết bị local** - không cần kết nối internet để inference
+- 🎯 **Đa dạng giọng nói** - hỗ trợ nhiều giọng nam/nữ miền Nam
+- ⚡ **Hiệu suất cao** - có thể chạy realtime trên CPU/GPU
+- 🔧 **Dễ tích hợp** - API đơn giản, hỗ trợ Gradio web interface
 
 ## Chi tiết mô hình
 
@@ -41,6 +54,11 @@ sudo apt install espeak
 
 # Arch Linux
 paru -S aur/espeak
+
+# Windows
+# Tải và cài đặt từ: https://github.com/espeak-ng/espeak-ng/releases
+# Mặc định cài vào: C:\Program Files\eSpeak NG\
+# Code sẽ tự động nhận diện đường dẫn này
 ```
 
 ### Cài đặt Python dependencies
@@ -50,8 +68,48 @@ File requirements bao gồm các dependencies cần thiết để chạy model v
 Inference tương thích và đã được test trên python>=3.11.
 
 ```bash
+# Cài đặt từ requirements.txt
 pip install -r requirements.txt
+
+# Hoặc sử dụng uv (nếu có pyproject.toml)
+uv pip install -r requirements.txt
+
+# Hoặc cài đặt từ pyproject.toml
+pip install -e .
 ```
+
+**Lưu ý**: Nếu bạn sử dụng GPU, hãy đảm bảo cài đặt PyTorch với hỗ trợ CUDA phù hợp:
+```bash
+# Xem hướng dẫn tại: https://pytorch.org/get-started/locally/
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118  # CUDA 11.8
+```
+## 📁 Cấu trúc dự án
+
+```
+VieNeuTTS/
+├── vieneutts.py              # Module chính chứa class VieNeuTTS
+├── main.py                   # Script ví dụ sử dụng cơ bản
+├── gradio_app.py             # Ứng dụng Gradio để chạy web demo (local)
+├── requirements.txt          # Python dependencies
+├── pyproject.toml            # Project configuration (nếu dùng uv)
+├── README.md                 # File này
+├── sample/                   # Thư mục chứa các file audio và text mẫu
+│   ├── id_0001.wav/txt      # Nam 1 - miền Nam
+│   ├── id_0002.wav/txt      # Nữ 1 - miền Nam
+│   ├── id_0003.wav/txt      # Nam 2 - miền Nam
+│   ├── id_0004.wav/txt      # Nữ 2 - miền Nam
+│   ├── id_0005.wav/txt      # Nam 3 - miền Nam
+│   └── id_0007.wav/txt      # Nam 4 - miền Nam
+├── VieNeuTTS/                # Thư mục con (cho Hugging Face Spaces)
+│   ├── app.py               # Gradio app cho Spaces
+│   └── vieneutts.py         # Module VieNeuTTS (bản sao)
+└── output_audio/             # Thư mục chứa kết quả (tự tạo khi chạy)
+```
+
+## 💻 Cách sử dụng
+
+### 1. Sử dụng qua Python API
+
 ## Ví dụ cơ bản
 
 ```python
@@ -98,7 +156,56 @@ for i, text in enumerate(input_texts, 1):
     sf.write(output_path, wav, 24000)
     print(f"Saved to {output_path}")
 ```
-### Khuyến cáo
+
+### 2. Sử dụng qua Gradio Web Interface (Local)
+
+Chạy ứng dụng web đơn giản với giao diện trực quan:
+
+```bash
+python gradio_app.py
+```
+
+Sau đó mở trình duyệt và truy cập `http://127.0.0.1:7860`
+
+**Tính năng của Gradio App:**
+- ✅ Chọn giọng từ 6 giọng mẫu có sẵn
+- ✅ Upload audio tùy chỉnh để clone giọng
+- ✅ Preview và download kết quả
+- ✅ Có ví dụ mẫu sẵn để thử nghiệm
+
+### 3. Sử dụng script main.py
+
+Script `main.py` cung cấp ví dụ tổng hợp nhiều văn bản cùng lúc:
+
+```bash
+python main.py
+```
+
+Kết quả sẽ được lưu trong thư mục `output_audio/`.
+
+**Lưu ý**: Bạn có thể chỉnh sửa trong `main.py`:
+- Chọn giọng mẫu (id_0001 đến id_0007)
+- Thay đổi văn bản đầu vào
+- Tùy chỉnh device (cuda/cpu)
+
+### 4. Giọng mẫu có sẵn
+
+Trong thư mục `sample/`, có 6 giọng mẫu sẵn có:
+
+| File | Giới tính | Miền | Mô tả |
+|------|-----------|------|-------|
+| `id_0001` | Nam | Miền Nam | Giọng nam 1 |
+| `id_0002` | Nữ | Miền Nam | Giọng nữ 1 |
+| `id_0003` | Nam | Miền Nam | Giọng nam 2 |
+| `id_0004` | Nữ | Miền Nam | Giọng nữ 2 |
+| `id_0005` | Nam | Miền Nam | Giọng nam 3 |
+| `id_0007` | Nam | Miền Nam | Giọng nam 4 |
+
+**Quy ước**: 
+- File số **lẻ** (1, 3, 5, 7) → Giọng **Nam**
+- File số **chẵn** (2, 4) → Giọng **Nữ**
+
+## ⚠️ Khuyến cáo
 
 Vui lòng không sử dụng mô hình này cho mục đích xấu hoặc vi phạm pháp luật, bao gồm:
 
@@ -109,13 +216,50 @@ Vui lòng không sử dụng mô hình này cho mục đích xấu hoặc vi ph�
 
 Hãy tôn trọng quyền riêng tư và quyền sở hữu trí tuệ của người khác.
 
-## Giới hạn
+## ⚠️ Giới hạn
 
 - Mô hình có thể không phát âm chính xác 100% các từ tiếng Việt phức tạp hoặc từ vựng chuyên ngành
 - Chất lượng đầu ra phụ thuộc nhiều vào chất lượng của audio tham chiếu
-- Hiệu suất có thể giảm với văn bản quá dài (khuyến nghị chia nhỏ văn bản dài)
+- Hiệu suất có thể giảm với văn bản quá dài (khuyến nghị chia nhỏ văn bản dài, tối đa ~500 ký tự)
+- Văn bản đầu vào nên ở dạng chuẩn, tránh viết tắt hoặc ký tự đặc biệt không chuẩn
 
-## License
+## 🐛 Xử lý lỗi thường gặp
+
+### Lỗi: "Failed to import espeak"
+
+**Nguyên nhân**: Chưa cài đặt hoặc chưa cấu hình đúng eSpeak NG
+
+**Giải pháp**:
+- **Windows**: Đảm bảo đã cài đặt eSpeak NG vào `C:\Program Files\eSpeak NG\`
+- **Linux**: Chạy `sudo apt install espeak` hoặc `sudo apt install espeak-ng`
+- **MacOS**: Chạy `brew install espeak` hoặc `brew install espeak-ng`
+
+### Lỗi: "CUDA out of memory"
+
+**Nguyên nhân**: GPU không đủ bộ nhớ
+
+**Giải pháp**:
+- Sử dụng CPU: đổi `backbone_device="cpu"` và `codec_device="cpu"`
+- Hoặc sử dụng model quantized (GGUF Q4/Q8)
+
+### Lỗi: "No valid speech tokens found"
+
+**Nguyên nhân**: Model không generate được speech tokens hợp lệ
+
+**Giải pháp**:
+- Kiểm tra lại text input (không để trống, không quá dài)
+- Kiểm tra audio reference (đảm bảo file hợp lệ)
+- Thử với text ngắn hơn
+
+## 📚 Tài liệu tham khảo
+
+- [GitHub Repository](https://github.com/pnnbao97/VieNeu-TTS)
+- [Hugging Face Model](https://huggingface.co/pnnbao-ump/VieNeu-TTS)
+- [NeuTTS Air Base Model](https://huggingface.co/neuphonic/neutts-air)
+- [Hướng dẫn Finetune](https://github.com/pnnbao-ump/VieNeuTTS/blob/main/finetune.ipynb)
+- [Dataset huấn luyện](https://huggingface.co/datasets/pnnbao-ump/VieNeuCodec-dataset)
+
+## 📄 License
 
 Apache 2.0
 
@@ -157,5 +301,27 @@ Dự án này được xây dựng dựa trên [NeuTTS Air](https://huggingface.
 
 ---
 
-**Lưu ý**: Đây là phiên bản nghiên cứu và thử nghiệm. Vui lòng báo cáo các vấn đề hoặc đóng góp cải tiến qua GitHub Issues.
+**Lưu ý**: Đây là phiên bản nghiên cứu và thử nghiệm. Vui lòng báo cáo các vấn đề hoặc đóng góp cải tiến qua [GitHub Issues](https://github.com/pnnbao97/VieNeu-TTS/issues).
+
+---
+
+## 🙏 Đóng góp
+
+Mọi đóng góp đều được chào đón! Vui lòng:
+
+1. Fork the repository
+2. Tạo branch mới cho feature của bạn (`git checkout -b feature/AmazingFeature`)
+3. Commit các thay đổi (`git commit -m 'Add some AmazingFeature'`)
+4. Push lên branch (`git push origin feature/AmazingFeature`)
+5. Mở Pull Request
+
+## 📞 Hỗ trợ
+
+Nếu bạn gặp vấn đề hoặc có câu hỏi:
+- Tạo issue trên [GitHub](https://github.com/pnnbao97/VieNeu-TTS/issues)
+- Liên hệ qua [Facebook](https://www.facebook.com/bao.phamnguyenngoc.5)
+
+---
+
+**Made with ❤️ for Vietnamese TTS community**
 
