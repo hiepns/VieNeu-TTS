@@ -16,9 +16,10 @@ dependencies = [
     "torch",
     "torchvision",
     "torchaudio",
-    "huggingface-hub>=0.36.0",
+    "huggingface-hub[cli]>=0.36.0",
     "neucodec>=0.0.4",
     "librosa>=0.11.0",
+    "gradio>=5.49.1",
 ]
 
 [tool.uv.sources]
