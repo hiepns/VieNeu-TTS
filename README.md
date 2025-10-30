@@ -46,10 +46,25 @@ cd VieNeu-TTS
 ### Cài đặt espeak (dependency bắt buộc)
 
 Tham khảo hướng dẫn chi tiết tại: https://github.com/espeak-ng/espeak-ng/blob/master/docs/guide.md
-
 ```bash
 # Mac OS
 brew install espeak
+
+# Sau khi cài đặt, kiểm tra đường dẫn thư viện
+brew info espeak
+
+# Nếu gặp lỗi "espeak not installed", cần set environment variables:
+# Thêm vào ~/.zshrc hoặc ~/.bash_profile:
+export PHONEMIZER_ESPEAK_LIBRARY=/opt/homebrew/lib/libespeak-ng.dylib  # Apple Silicon
+# hoặc
+export PHONEMIZER_ESPEAK_LIBRARY=/usr/local/lib/libespeak-ng.dylib     # Intel Mac
+
+export PHONEMIZER_ESPEAK_PATH=/opt/homebrew/bin/espeak-ng              # Apple Silicon
+# hoặc
+export PHONEMIZER_ESPEAK_PATH=/usr/local/bin/espeak-ng                 # Intel Mac
+
+# Sau đó chạy:
+source ~/.zshrc  # hoặc source ~/.bash_profile
 
 # Ubuntu/Debian
 sudo apt install espeak
@@ -62,6 +77,11 @@ paru -S aur/espeak
 # Mặc định cài vào: C:\Program Files\eSpeak NG\
 # Code sẽ tự động nhận diện đường dẫn này
 ```
+
+**Lưu ý cho macOS:**
+- Nếu vẫn gặp lỗi sau khi cài đặt, hãy đảm bảo đã set đúng environment variables
+- Kiểm tra cài đặt bằng lệnh: `echo 'test' | espeak-ng -x -q --ipa -v en-us`
+- Nếu output hiển thị phiên âm IPA, espeak đã được cài đặt thành công
 
 ### Cài đặt Python dependencies
 
@@ -326,6 +346,7 @@ Nếu bạn gặp vấn đề hoặc có câu hỏi:
 ---
 
 **Made with ❤️ for Vietnamese TTS community**
+
 
 
 
