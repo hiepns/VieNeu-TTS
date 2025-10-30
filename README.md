@@ -50,22 +50,6 @@ Tham khảo hướng dẫn chi tiết tại: https://github.com/espeak-ng/espeak
 # Mac OS
 brew install espeak
 
-# Sau khi cài đặt, kiểm tra đường dẫn thư viện
-brew info espeak
-
-# Nếu gặp lỗi "espeak not installed", cần set environment variables:
-# Thêm vào ~/.zshrc hoặc ~/.bash_profile:
-export PHONEMIZER_ESPEAK_LIBRARY=/opt/homebrew/lib/libespeak-ng.dylib  # Apple Silicon
-# hoặc
-export PHONEMIZER_ESPEAK_LIBRARY=/usr/local/lib/libespeak-ng.dylib     # Intel Mac
-
-export PHONEMIZER_ESPEAK_PATH=/opt/homebrew/bin/espeak-ng              # Apple Silicon
-# hoặc
-export PHONEMIZER_ESPEAK_PATH=/usr/local/bin/espeak-ng                 # Intel Mac
-
-# Sau đó chạy:
-source ~/.zshrc  # hoặc source ~/.bash_profile
-
 # Ubuntu/Debian
 sudo apt install espeak
 
@@ -346,6 +330,7 @@ Nếu bạn gặp vấn đề hoặc có câu hỏi:
 ---
 
 **Made with ❤️ for Vietnamese TTS community**
+
 
 
 
