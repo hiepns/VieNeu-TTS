@@ -1,10 +1,9 @@
-import os
 import gradio as gr
-import numpy as np
 import soundfile as sf
 import tempfile
 import torch
 
+print("⏳ Đang khởi động VieNeu-TTS...")
 # Import vieneutts
 from vieneutts import VieNeuTTS
 
@@ -59,8 +58,8 @@ def synthesize_speech(text, voice_choice, custom_audio=None, custom_text=None):
             return None, "❌ Vui lòng nhập văn bản cần tổng hợp"
         
         # Giới hạn độ dài text
-        if len(text) > 500:
-            return None, "❌ Văn bản quá dài! Vui lòng nhập tối đa 500 ký tự"
+        if len(text) > 250:
+            return None, "❌ Văn bản quá dài! Vui lòng nhập tối đa 250 ký tự"
         
         # Xác định reference audio và text
         if custom_audio is not None and custom_text:
@@ -148,7 +147,7 @@ with gr.Blocks(title="VieNeu-TTS Local", css=custom_css, theme=gr.themes.Soft())
         with gr.Column():
             # Input text
             text_input = gr.Textbox(
-                label="📝 Văn bản đầu vào (tối đa 500 ký tự)",
+                label="📝 Văn bản đầu vào (tối đa 250 ký tự)",
                 placeholder="Nhập văn bản tiếng Việt...",
                 lines=4,
                 max_lines=6,
@@ -156,7 +155,7 @@ with gr.Blocks(title="VieNeu-TTS Local", css=custom_css, theme=gr.themes.Soft())
             )
             
             # Character counter
-            char_count = gr.Markdown("209 / 500 ký tự")
+            char_count = gr.Markdown("209 / 250 ký tự")
             
             # Voice selection
             voice_select = gr.Radio(
@@ -205,8 +204,8 @@ with gr.Blocks(title="VieNeu-TTS Local", css=custom_css, theme=gr.themes.Soft())
     # Update character count
     def update_char_count(text):
         count = len(text) if text else 0
-        color = "red" if count > 500 else "green"
-        return f"<span style='color: {color}'>{count} / 500 ký tự</span>"
+        color = "red" if count > 250 else "green"
+        return f"<span style='color: {color}'>{count} / 250 ký tự</span>"
     
     text_input.change(
         fn=update_char_count,
@@ -247,8 +246,8 @@ with gr.Blocks(title="VieNeu-TTS Local", css=custom_css, theme=gr.themes.Soft())
 if __name__ == "__main__":
     demo.queue(max_size=20)
     demo.launch(
-        share=False,  # Không tạo public link
-        server_name="127.0.0.1",  # Chỉ chạy local
+        share=False,
+        server_name="127.0.0.1",
         server_port=7860,
         show_error=True
     )
