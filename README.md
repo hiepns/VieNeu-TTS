@@ -3,6 +3,8 @@
 [![Github](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/pnnbao97/VieNeu-TTS)
 [![Hugging Face](https://img.shields.io/badge/Hugging%20Face-Model-yellow)](https://huggingface.co/pnnbao-ump/VieNeu-TTS)
 
+<img width="600" height="595" alt="image" src="https://github.com/user-attachments/assets/66c098c4-d184-4e7a-826a-ba8c6c556fab" />
+
 **VieNeu-TTS** là mô hình Text-to-Speech (TTS) tiếng Việt đầu tiên chạy trên thiết bị cá nhân với khả năng nhân bản giọng nói tức thì. Được fine-tune từ [NeuTTS Air](https://huggingface.co/neuphonic/neutts-air), VieNeu-TTS mang đến giọng nói tiếng Việt tự nhiên, siêu chân thực với hiệu suất thời gian thực trên CPU.
 
 Dựa trên backbone Qwen 0.5B LLM, VieNeu-TTS kết hợp giữa tốc độ, kích thước nhỏ gọn và chất lượng âm thanh cao - hoàn hảo cho các ứng dụng voice agent, trợ lý ảo, đồ chơi tương tác và các ứng dụng yêu cầu bảo mật cao chạy trên thiết bị local.
@@ -44,10 +46,25 @@ cd VieNeu-TTS
 ### Cài đặt espeak (dependency bắt buộc)
 
 Tham khảo hướng dẫn chi tiết tại: https://github.com/espeak-ng/espeak-ng/blob/master/docs/guide.md
-
 ```bash
 # Mac OS
 brew install espeak
+
+# Sau khi cài đặt, kiểm tra đường dẫn thư viện
+brew info espeak
+
+# Nếu gặp lỗi "espeak not installed", cần set environment variables:
+# Thêm vào ~/.zshrc hoặc ~/.bash_profile:
+export PHONEMIZER_ESPEAK_LIBRARY=/opt/homebrew/lib/libespeak-ng.dylib  # Apple Silicon
+# hoặc
+export PHONEMIZER_ESPEAK_LIBRARY=/usr/local/lib/libespeak-ng.dylib     # Intel Mac
+
+export PHONEMIZER_ESPEAK_PATH=/opt/homebrew/bin/espeak-ng              # Apple Silicon
+# hoặc
+export PHONEMIZER_ESPEAK_PATH=/usr/local/bin/espeak-ng                 # Intel Mac
+
+# Sau đó chạy:
+source ~/.zshrc  # hoặc source ~/.bash_profile
 
 # Ubuntu/Debian
 sudo apt install espeak
@@ -60,6 +77,11 @@ paru -S aur/espeak
 # Mặc định cài vào: C:\Program Files\eSpeak NG\
 # Code sẽ tự động nhận diện đường dẫn này
 ```
+
+**Lưu ý cho macOS:**
+- Nếu vẫn gặp lỗi sau khi cài đặt, hãy đảm bảo đã set đúng environment variables
+- Kiểm tra cài đặt bằng lệnh: `echo 'test' | espeak-ng -x -q --ipa -v en-us`
+- Nếu output hiển thị phiên âm IPA, espeak đã được cài đặt thành công
 
 ### Cài đặt Python dependencies
 
@@ -324,4 +346,9 @@ Nếu bạn gặp vấn đề hoặc có câu hỏi:
 ---
 
 **Made with ❤️ for Vietnamese TTS community**
+
+
+
+
+
 
