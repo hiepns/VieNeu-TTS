@@ -197,8 +197,12 @@ python -m examples.infer_long_text.py \
   --output output_audio/sample_long_text.wav
 ```
 
-Listen to a sample of long-form synthesis:
-[longtext.mp3](https://github.com/user-attachments/files/23436562/longtext.mp3)
+**🎧 Listen to the result:**
+
+<audio controls style="width: 100%;">
+  <source src="https://github.com/user-attachments/files/23436562/longtext.mp3" type="audio/mpeg">
+  Your browser does not support the audio element. <a href="https://github.com/user-attachments/files/23436562/longtext.mp3">Download audio</a>
+</audio>
 
 Use `--text "raw paragraph here"` to infer without creating a file.
 
@@ -309,5 +313,6 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
