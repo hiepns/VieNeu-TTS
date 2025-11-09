@@ -190,13 +190,15 @@ Then open `http://127.0.0.1:7860` to:
 `examples/infer_long_text.py` chunks long passages into ≤256-character segments (prefers sentence boundaries) and synthesizes them sequentially.
 
 ```bash
-uv run examples/infer_long_text.py \
+python -m examples.infer_long_text.py \
   --text-file examples/sample_long_text.txt \
   --ref-audio sample/id_0001.wav \
   --ref-text sample/id_0001.txt \
-  --chunk-output-dir output_audio/chunks \
   --output output_audio/sample_long_text.wav
 ```
+
+Listen to a sample of long-form synthesis:
+[longtext.mp3](https://github.com/user-attachments/files/23436562/longtext.mp3)
 
 Use `--text "raw paragraph here"` to infer without creating a file.
 
@@ -307,4 +309,5 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
