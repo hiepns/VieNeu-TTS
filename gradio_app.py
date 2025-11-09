@@ -2,6 +2,7 @@ import gradio as gr
 import soundfile as sf
 import tempfile
 import torch
+from utils.normalize_text import VietnameseTTSNormalizer
 
 print("⏳ Đang khởi động VieNeu-TTS...")
 # Import vieneutts
@@ -19,6 +20,8 @@ tts = VieNeuTTS(
     codec_device=device
 )
 print("✅ Model đã tải xong!")
+
+normalizer = VietnameseTTSNormalizer()
 
 # Danh sách giọng mẫu (bỏ id_0006)
 VOICE_SAMPLES = {
@@ -64,16 +67,22 @@ def synthesize_speech(text, voice_choice, custom_audio=None, custom_text=None):
         # Xác định reference audio và text
         if custom_audio is not None and custom_text:
             ref_audio_path = custom_audio
-            ref_text = custom_text
+            ref_text_raw = custom_text
             print("🎨 Sử dụng giọng tùy chỉnh")
         elif voice_choice in VOICE_SAMPLES:
             ref_audio_path = VOICE_SAMPLES[voice_choice]["audio"]
             ref_text_path = VOICE_SAMPLES[voice_choice]["text"]
             with open(ref_text_path, "r", encoding="utf-8") as f:
-                ref_text = f.read()
+                ref_text_raw = f.read()
             print(f"🎤 Sử dụng giọng: {voice_choice}")
         else:
             return None, "❌ Vui lòng chọn giọng hoặc tải lên audio tùy chỉnh"
+        
+        normalized_text = normalizer.normalize(text)
+        if not normalized_text:
+            return None, "❌ Văn bản sau khi chuẩn hóa bị trống. Vui lòng kiểm tra lại."
+
+        normalized_ref_text = normalizer.normalize(ref_text_raw)
         
         # Encode reference audio
         print(f"📝 Đang xử lý: {text[:50]}...")
@@ -81,7 +90,7 @@ def synthesize_speech(text, voice_choice, custom_audio=None, custom_text=None):
         
         # Tổng hợp giọng nói
         print(f"🎵 Đang tổng hợp giọng nói trên {device.upper()}...")
-        wav = tts.infer(text, ref_codes, ref_text)
+        wav = tts.infer(normalized_text, ref_codes, normalized_ref_text)
         
         # Lưu file tạm
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:

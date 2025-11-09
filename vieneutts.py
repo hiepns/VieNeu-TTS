@@ -38,7 +38,11 @@ elif platform.system() == "Darwin":  # macOS
             "3. Check installation path with: brew info espeak"
         )
 else:
-    raise ValueError(f"Unsupported platform: {platform.system()}. Please set the espeak library path manually.")
+    raise ValueError(
+        "Unable to determine the eSpeak NG library path for this operating system.\n"
+        "Please review your installation and configure the library manually.\n"
+        "Troubleshooting guide: https://github.com/pnnbao97/VieNeu-TTS/issues/5"
+    )
 
 def _linear_overlap_add(frames: list[np.ndarray], stride: int) -> np.ndarray:
     # original impl --> https://github.com/facebookresearch/encodec/blob/main/encodec/utils.py
