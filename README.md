@@ -3,19 +3,21 @@
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/pnnbao97/VieNeu-TTS)
 [![Hugging Face](https://img.shields.io/badge/Hugging%20Face-Model-yellow)](https://huggingface.co/pnnbao-ump/VieNeu-TTS)
 
-[<img width="600" height="595" alt="VieNeu-TTS" src="https://github.com/user-attachments/assets/66c098c4-d184-4e7a-826a-ba8c6c556fab" />](https://github.com/user-attachments/assets/5ad53bc9-e816-41a7-9474-ea470b1cbfdd)
+<img width="899" height="615" alt="Untitled" src="https://github.com/user-attachments/assets/7eb9b816-6ab7-4049-866f-f85e36cb9c6f" />
 
-> 📢 **Upcoming Release Announcement**
+> 📢 **Upcoming Release**
 >
-> **VieNeu-TTS-1000h is coming soon!** 🚀  
-> We are training an upgraded checkpoint with 1 000 hours of data to deliver:  
-> - Better pronunciation accuracy  
-> - More natural prosody and intonation  
-> - Superior voice-cloning fidelity  
-> - Stronger handling of complex Vietnamese text  
+> **VieNeu-TTS-1000h** is currently in training, using ~1000 hours of high-quality Vietnamese speech **combined with English speech data**.  
+> This next version will support **bilingual voice synthesis (Vietnamese + English)** with consistent speaker identity.
 >
-> **Current release:** VieNeu-TTS-140h (stable & production-ready)  
-> Follow this repo or the Hugging Face model card for updates.
+> Expected improvements:
+> - More accurate and stable Vietnamese pronunciation
+> - Improved English pronunciation and code-switching
+> - Higher voice cloning fidelity and speaker consistency
+>
+> A **GGUF version** is also planned for the earliest possible release.
+>
+> **Current release:** VieNeu-TTS-140h (stable & production-ready)
 
 **VieNeu-TTS** is an on-device Vietnamese Text-to-Speech system with instant voice cloning. The model is fine-tuned from [NeuTTS Air](https://huggingface.co/neuphonic/neutts-air) and produces natural 24 kHz speech with real-time latency on typical CPUs or GPUs. It is ideal for offline voice assistants, embedded devices, privacy-first applications, and creative tools.
 
@@ -173,6 +175,7 @@ python main.py
 This script runs several normalized sentences using the bundled sample voice and writes `output_*.wav` files under `output_audio/`.
 
 ### Gradio web demo
+[<img width="600" height="595" alt="VieNeu-TTS" src="https://github.com/user-attachments/assets/66c098c4-d184-4e7a-826a-ba8c6c556fab" />](https://github.com/user-attachments/assets/5ad53bc9-e816-41a7-9474-ea470b1cbfdd)
 
 ```bash
 python gradio_app.py
@@ -308,6 +311,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
