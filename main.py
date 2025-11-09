@@ -1,4 +1,4 @@
-from vieneutts import VieNeuTTS
+from vieneu_tts import VieNeuTTS
 from utils.normalize_text import VietnameseTTSNormalizer
 import soundfile as sf
 import os

@@ -119,7 +119,7 @@ VieNeuTTS/
 ## Ví dụ cơ bản
 
 ```python
-from vieneutts import VieNeuTTS
+from vieneu_tts import VieNeuTTS
 import soundfile as sf
 import os
 

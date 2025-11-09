@@ -3,10 +3,9 @@ import soundfile as sf
 import tempfile
 import torch
 from utils.normalize_text import VietnameseTTSNormalizer
+from vieneu_tts import VieNeuTTS
 
 print("⏳ Đang khởi động VieNeu-TTS...")
-# Import vieneutts
-from vieneutts import VieNeuTTS
 
 # Khởi tạo model
 print("📦 Đang tải model...")
