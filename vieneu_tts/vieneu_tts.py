@@ -10,11 +10,54 @@ from phonemizer import phonemize
 import platform
 import re
 import os
+import glob
 
 if platform.system() == "Windows":
     EspeakWrapper.set_library(r"C:\Program Files\eSpeak NG\libespeak-ng.dll")
+
 elif platform.system() == "Linux":
-    EspeakWrapper.set_library("/usr/lib/x86_64-linux-gnu/libespeak-ng.so")
+    lib_found = False
+    search_patterns = [
+        "/usr/lib/x86_64-linux-gnu/libespeak-ng.so*",
+        "/usr/lib/x86_64-linux-gnu/libespeak.so*",
+        "/usr/lib/libespeak-ng.so*",
+        "/usr/lib64/libespeak-ng.so*",
+        "/usr/local/lib/libespeak-ng.so*",
+    ]
+    
+    for pattern in search_patterns:
+        matches = glob.glob(pattern)
+        if matches:
+            matches.sort(key=len)
+            EspeakWrapper.set_library(matches[0])
+            lib_found = True
+            break
+    
+    if not lib_found:
+        possible_paths = [
+            "/usr/lib/x86_64-linux-gnu/libespeak-ng.so.1",
+            "/usr/lib/x86_64-linux-gnu/libespeak-ng.so",
+            "/usr/lib/libespeak-ng.so.1",
+            "/usr/lib/libespeak-ng.so",
+            "/usr/lib64/libespeak-ng.so.1",
+            "/usr/lib64/libespeak-ng.so",
+            "/usr/local/lib/libespeak-ng.so.1",
+            "/usr/local/lib/libespeak-ng.so",
+        ]
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                EspeakWrapper.set_library(path)
+                lib_found = True
+                break
+    
+    if not lib_found:
+        raise RuntimeError(
+            "Unable to determine the eSpeak NG library path for this operating system.\n"
+            "Please review your installation and configure the library manually.\n"
+            "Troubleshooting guide: https://github.com/pnnbao97/VieNeu-TTS/issues/5"
+        )
+
 elif platform.system() == "Darwin":  # macOS
     # Check environment variable first
     espeak_lib = os.environ.get('PHONEMIZER_ESPEAK_LIBRARY')
@@ -37,11 +80,11 @@ elif platform.system() == "Darwin":  # macOS
             "2. Or set environment variable: export PHONEMIZER_ESPEAK_LIBRARY=/path/to/libespeak-ng.dylib\n"
             "3. Check installation path with: brew info espeak"
         )
+
 else:
     raise ValueError(
-        "Unable to determine the eSpeak NG library path for this operating system.\n"
-        "Please review your installation and configure the library manually.\n"
-        "Troubleshooting guide: https://github.com/pnnbao97/VieNeu-TTS/issues/5"
+        f"Unsupported operating system: {platform.system()}\n"
+        "eSpeak NG library configuration is only available for Windows, Linux, and macOS."
     )
 
 def _linear_overlap_add(frames: list[np.ndarray], stride: int) -> np.ndarray:
