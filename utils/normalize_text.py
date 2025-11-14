@@ -153,35 +153,101 @@ class VietnameseTTSNormalizer:
         return text
     
     def _normalize_time(self, text):
-        """Convert time notation to words."""
-        text = re.sub(r'(\d{1,2}):(\d{2}):(\d{2})', r'\1 giờ \2 phút \3 giây', text)
-        text = re.sub(r'(\d{1,2}):(\d{2})', r'\1 giờ \2 phút', text)
-        text = re.sub(r'(\d{1,2})h(\d{2})', r'\1 giờ \2 phút', text)
-        text = re.sub(r'(\d{1,2})h\b', r'\1 giờ', text)
+        """Convert time notation to words with validation."""
+        
+        def validate_and_convert_time(match):
+            """Validate time components before converting."""
+            groups = match.groups()
+            
+            # HH:MM:SS format
+            if len(groups) == 3:
+                hour, minute, second = groups
+                hour_int, minute_int, second_int = int(hour), int(minute), int(second)
+                
+                # Validate ranges
+                if not (0 <= hour_int <= 23):
+                    return match.group(0)  # Return original if invalid
+                if not (0 <= minute_int <= 59):
+                    return match.group(0)
+                if not (0 <= second_int <= 59):
+                    return match.group(0)
+                
+                return f"{hour} giờ {minute} phút {second} giây"
+            
+            # HH:MM or HHhMM format
+            elif len(groups) == 2:
+                hour, minute = groups
+                hour_int, minute_int = int(hour), int(minute)
+                
+                # Validate ranges
+                if not (0 <= hour_int <= 23):
+                    return match.group(0)
+                if not (0 <= minute_int <= 59):
+                    return match.group(0)
+                
+                return f"{hour} giờ {minute} phút"
+            
+            # HHh format
+            else:
+                hour = groups[0]
+                hour_int = int(hour)
+                
+                if not (0 <= hour_int <= 23):
+                    return match.group(0)
+                
+                return f"{hour} giờ"
+        
+        # Apply patterns with validation
+        text = re.sub(r'(\d{1,2}):(\d{2}):(\d{2})', validate_and_convert_time, text)
+        text = re.sub(r'(\d{1,2}):(\d{2})', validate_and_convert_time, text)
+        text = re.sub(r'(\d{1,2})h(\d{2})', validate_and_convert_time, text)
+        text = re.sub(r'(\d{1,2})h\b', validate_and_convert_time, text)
+        
         return text
     
     def _normalize_date(self, text):
-        """Convert date notation to words."""
+        """Convert date notation to words with validation."""
+        
+        def is_valid_date(day, month, year):
+            """Check if date components are valid."""
+            day, month, year = int(day), int(month), int(year)
+            
+            # Basic range checks
+            if not (1 <= day <= 31):
+                return False
+            if not (1 <= month <= 12):
+                return False
+
+            return True
+        
         def date_to_text(match):
             day, month, year = match.groups()
-            return f"ngày {day} tháng {month} năm {year}"
+            if is_valid_date(day, month, year):
+                return f"ngày {day} tháng {month} năm {year}"
+            return match.group(0)  # Return original if invalid
         
         def date_iso_to_text(match):
             year, month, day = match.groups()
-            return f"ngày {day} tháng {month} năm {year}"
+            if is_valid_date(day, month, year):
+                return f"ngày {day} tháng {month} năm {year}"
+            return match.group(0)
         
         def date_short_year(match):
             day, month, year = match.groups()
             full_year = f"20{year}" if int(year) < 50 else f"19{year}"
-            return f"ngày {day} tháng {month} năm {full_year}"
+            if is_valid_date(day, month, full_year):
+                return f"ngày {day} tháng {month} năm {full_year}"
+            return match.group(0)
         
+        # Apply patterns with validation
         text = re.sub(r'\bngày\s+(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})\b', 
-                     lambda m: f"ngày {m.group(1)} tháng {m.group(2)} năm {m.group(3)}", text)
+                     lambda m: date_to_text(m).replace('ngày ngày', 'ngày'), text)
         text = re.sub(r'\bngày\s+(\d{1,2})[/\-](\d{1,2})[/\-](\d{2})\b', 
                      lambda m: date_short_year(m).replace('ngày ngày', 'ngày'), text)
         text = re.sub(r'\b(\d{4})-(\d{1,2})-(\d{1,2})\b', date_iso_to_text, text)
         text = re.sub(r'\b(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})\b', date_to_text, text)
         text = re.sub(r'\b(\d{1,2})[/\-](\d{1,2})[/\-](\d{2})\b', date_short_year, text)
+        
         return text
     
     def _normalize_phone(self, text):
@@ -212,18 +278,23 @@ class VietnameseTTSNormalizer:
         return text
     
     def _normalize_numbers(self, text):
-        """Normalize number formats (thousand separators and decimals)."""
-        text = re.sub(r'(\d{1,3})(?:\.(\d{3}))+\b', 
-                     lambda m: m.group(0).replace('.', ''), text)
-        
+        text = re.sub(r'(\d+(?:[,.]\d+)?)%', lambda m: f'{m.group(1)} phần trăm', text)
+        # 1. Xóa dấu thousand separator trước
+        text = re.sub(r'(\d{1,3})(?:\.(\d{3}))+', lambda m: m.group(0).replace('.', ''), text)
+    
+        # 2. Chuyển số thập phân thành chữ
         def decimal_to_words(match):
             whole = match.group(1)
             decimal = match.group(2)
             decimal_words = ' '.join([self.digits[int(d)] for d in decimal])
-            return f"{whole} phẩy {decimal_words}"
+            separator = 'phẩy' if ',' in match.group(0) else 'chấm'
+            return f"{whole} {separator} {decimal_words}"
         
+        # 2a. Dấu phẩy
         text = re.sub(r'(\d+),(\d+)', decimal_to_words, text)
+        # 2b. Dấu chấm (1-2 chữ số thập phân)
         text = re.sub(r'(\d+)\.(\d{1,2})\b', decimal_to_words, text)
+        
         return text
     
     def _read_two_digits(self, n):
@@ -242,7 +313,7 @@ class VietnameseTTSNormalizer:
             if ones == 0:
                 return f"{self.digits[tens]} mươi"
             elif ones == 1:
-                return f"{self.digits[tens]} mươi một"
+                return f"{self.digits[tens]} mươi mốt"
             elif ones == 5:
                 return f"{self.digits[tens]} mươi lăm"
             else:
@@ -323,7 +394,7 @@ class VietnameseTTSNormalizer:
         text = re.sub(r'\s+[-–—]+\s+', ' ', text)
         text = re.sub(r'\.{2,}', ' ', text)
         text = re.sub(r'\s+\.\s+', ' ', text)
-        text = re.sub(r'[^\w\sàáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ.,!?;:@]', ' ', text)
+        text = re.sub(r'[^\w\sàáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ.,!?;:@%]', ' ', text)
         return text
     
     def _normalize_whitespace(self, text):
