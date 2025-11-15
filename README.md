@@ -36,6 +36,38 @@
 
 ---
 
+---
+
+## 💝 Support This Project
+
+**VieNeu-TTS** is a free, open-source project. However, training high-quality TTS models on **1000+ hours of speech data** requires significant computational resources.
+
+If you find this project useful, please consider supporting its development:
+
+<div align="center">
+
+[![Buy Me a Coffee](https://img.shields.io/badge/☕_Buy_Me_a_Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/pnnbao)
+
+</div>
+
+**Your support helps:**
+
+- 💰 **GPU Training Costs**: Training on 1000+ hours costs thousands of dollars in compute
+- 🚀 **New Features**: Emotion control, speaking styles, GGUF quantization
+- 📊 **Dataset Expansion**: Collecting more diverse Vietnamese voices (North, Central, South)
+- 🎯 **Quality Improvements**: Better pronunciation, naturalness, and voice cloning fidelity
+- 🌍 **Bilingual Support**: Vietnamese + English code-switching capabilities
+- 🔧 **Maintenance**: Bug fixes, updates, and community support
+
+<div align="center">
+
+*Every contribution, big or small, makes a real difference!*  
+*Thank you for supporting Vietnamese AI development!* 🇻🇳🙏
+
+</div>
+
+---
+
 ## 🔬 Model Overview
 
 - **Backbone:** Qwen 0.5B LLM (chat template)
@@ -311,6 +343,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
