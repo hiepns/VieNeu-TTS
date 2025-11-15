@@ -36,8 +36,6 @@
 
 ---
 
----
-
 ## 💝 Support This Project
 
 **VieNeu-TTS** is a free, open-source project. However, training high-quality TTS models on **1000+ hours of speech data** requires significant computational resources.
@@ -343,6 +341,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
