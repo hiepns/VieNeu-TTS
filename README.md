@@ -5,21 +5,16 @@
 
 <img width="899" height="615" alt="Untitled" src="https://github.com/user-attachments/assets/7eb9b816-6ab7-4049-866f-f85e36cb9c6f" />
 
-> 📢 **Upcoming Release**
->
-> **VieNeu-TTS-1000h** is currently in training, using ~1000 hours of high-quality Vietnamese speech **combined with English speech data**.  
-> This next version will support **bilingual voice synthesis (Vietnamese + English)** with consistent speaker identity.
->
-> Expected improvements:
-> - More accurate and stable Vietnamese pronunciation
-> - Improved English pronunciation and code-switching
-> - Higher voice cloning fidelity and speaker consistency
->
-> A **GGUF version** is also planned for the earliest possible release.
->
-> **Current release:** VieNeu-TTS-140h (stable & production-ready)
+**VieNeu-TTS-1000h** is an advanced on-device Vietnamese Text-to-Speech (TTS) model with **instant voice cloning**.  
 
-**VieNeu-TTS** is an on-device Vietnamese Text-to-Speech system with instant voice cloning. The model is fine-tuned from [NeuTTS Air](https://huggingface.co/neuphonic/neutts-air) and produces natural 24 kHz speech with real-time latency on typical CPUs or GPUs. It is ideal for offline voice assistants, embedded devices, privacy-first applications, and creative tools.
+Trained on ~1000 hours of high-quality Vietnamese speech, this model represents a significant upgrade from VieNeu-TTS-140h with the following improvements:
+
+- **Enhanced pronunciation**: More accurate and stable Vietnamese pronunciation
+- **Code-switching support**: Seamless transitions between Vietnamese and English
+- **Better voice cloning**: Higher fidelity and speaker consistency
+- **Real-time synthesis**: 24 kHz waveform generation on CPU or GPU
+
+Fine-tuned from **NeuTTS Air**, VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
 
 **Author:** Phạm Nguyễn Ngọc Bảo
 
@@ -158,42 +153,81 @@ VieNeu-TTS/
 
 ## 🚀 Quickstart
 
-### Python API
+## Quick Usage (Python)
 
 ```python
-from pathlib import Path
-
-from utils.normalize_text import VietnameseTTSNormalizer
 from vieneu_tts import VieNeuTTS
 import soundfile as sf
+import os
 
-texts = [
-    "Các khóa học trực tuyến đang giúp học sinh tiếp cận kiến thức mọi lúc mọi nơi.",
-    "Các nghiên cứu về bệnh Alzheimer cho thấy tác dụng tích cực của các bài tập trí não.",
+input_texts = [
+    "Các khóa học trực tuyến đang giúp học sinh tiếp cận kiến thức mọi lúc mọi nơi. Giáo viên sử dụng video, bài tập tương tác và thảo luận trực tuyến để nâng cao hiệu quả học tập.",
+
+    "Các nghiên cứu về bệnh Alzheimer cho thấy tác dụng tích cực của các bài tập trí não và chế độ dinh dưỡng lành mạnh, giúp giảm tốc độ suy giảm trí nhớ ở người cao tuổi.",
+
+    "Một tiểu thuyết trinh thám hiện đại dẫn dắt độc giả qua những tình tiết phức tạp, bí ẩn, kết hợp yếu tố tâm lý sâu sắc khiến người đọc luôn hồi hộp theo dõi diễn biến câu chuyện.",
+
+    "Các nhà khoa học nghiên cứu gen người phát hiện những đột biến mới liên quan đến bệnh di truyền. Điều này giúp nâng cao khả năng chẩn đoán và điều trị.",
 ]
 
-ref_audio_path = "sample/id_0001.wav"
-ref_text_path = "sample/id_0001.txt"
+output_dir = "./output_audio"
+os.makedirs(output_dir, exist_ok=True)
 
-normalizer = VietnameseTTSNormalizer()
-ref_text_raw = Path(ref_text_path).read_text(encoding="utf-8")
-normalized_ref_text = normalizer.normalize(ref_text_raw)
+def main(backbone="pnnbao-ump/VieNeu-TTS-1000h", codec="neuphonic/neucodec"):
+    """
+    In the sample directory, there are 7 wav files and 7 txt files with matching names.
+    These are pre-prepared reference files for testing:
+    - id_0001.wav + id_0001.txt
+    - id_0002.wav + id_0002.txt
+    - id_0003.wav + id_0003.txt
+    - id_0004.wav + id_0004.txt
+    - id_0005.wav + id_0005.txt
+    - id_0006.wav + id_0006.txt
+    - id_0007.wav + id_0007.txt
+    
+    Odd numbers = Male voices
+    Even numbers = Female voices
+    
+    Note: The model can clone any voice you provide (with corresponding text).
+    However, quality may not match the sample files. For best results, finetune
+    the model on your target voice. See finetune guide at:
+    https://github.com/pnnbao-ump/VieNeuTTS/blob/main/finetune.ipynb
+    """
+    # Male voice (South accent)
+    ref_audio_path = "./sample/id_0001.wav"
+    ref_text_path = "./sample/id_0001.txt"
+    
+    # Female voice (South accent) - uncomment to use
+    # ref_audio_path = "./sample/id_0002.wav"
+    # ref_text_path = "./sample/id_0002.txt"
 
-tts = VieNeuTTS(
-    backbone_repo="pnnbao-ump/VieNeu-TTS",
-    backbone_device="cuda",   # or "cpu"
-    codec_repo="neuphonic/neucodec",
-    codec_device="cuda",
-)
-ref_codes = tts.encode_reference(ref_audio_path)
+    ref_text_raw = open(ref_text_path, "r", encoding="utf-8").read()
+    
+    if not ref_audio_path or not ref_text_raw:
+        print("No reference audio or text provided.")
+        return None
 
-output_dir = Path("output_audio")
-output_dir.mkdir(exist_ok=True)
+    # Initialize VieNeuTTS-1000h
+    tts = VieNeuTTS(
+        backbone_repo=backbone,
+        backbone_device="cuda",
+        codec_repo=codec,
+        codec_device="cuda"
+    )
 
-for idx, raw_text in enumerate(texts, 1):
-    normalized_text = normalizer.normalize(raw_text)
-    wav = tts.infer(normalized_text, ref_codes, normalized_ref_text)
-    sf.write(output_dir / f"output_{idx}.wav", wav, 24_000)
+    print("Encoding reference audio...")
+    ref_codes = tts.encode_reference(ref_audio_path)
+
+    # Generate speech for all input texts
+    for i, text in enumerate(input_texts, 1):
+        print(f"Generating audio {i}/{len(input_texts)}: {text[:50]}...")
+        wav = tts.infer(text, ref_codes, ref_text_raw)
+        output_path = os.path.join(output_dir, f"output_{i}.wav")
+        sf.write(output_path, wav, 24000)
+        print(f"✓ Saved to {output_path}")
+
+if __name__ == "__main__":
+    main()
 ```
 
 ### CLI example (`main.py`)
@@ -341,6 +375,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
