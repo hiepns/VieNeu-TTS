@@ -5,87 +5,8 @@ import numpy as np
 import torch
 from neucodec import NeuCodec, DistillNeuCodec
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from phonemizer.backend.espeak.espeak import EspeakWrapper
-from phonemizer import phonemize
-import platform
+from utils.phonemize_text import phonemize_text, phonemize_with_dict
 import re
-import os
-import glob
-
-if platform.system() == "Windows":
-    EspeakWrapper.set_library(r"C:\Program Files\eSpeak NG\libespeak-ng.dll")
-
-elif platform.system() == "Linux":
-    lib_found = False
-    search_patterns = [
-        "/usr/lib/x86_64-linux-gnu/libespeak-ng.so*",
-        "/usr/lib/x86_64-linux-gnu/libespeak.so*",
-        "/usr/lib/libespeak-ng.so*",
-        "/usr/lib64/libespeak-ng.so*",
-        "/usr/local/lib/libespeak-ng.so*",
-    ]
-    
-    for pattern in search_patterns:
-        matches = glob.glob(pattern)
-        if matches:
-            matches.sort(key=len)
-            EspeakWrapper.set_library(matches[0])
-            lib_found = True
-            break
-    
-    if not lib_found:
-        possible_paths = [
-            "/usr/lib/x86_64-linux-gnu/libespeak-ng.so.1",
-            "/usr/lib/x86_64-linux-gnu/libespeak-ng.so",
-            "/usr/lib/libespeak-ng.so.1",
-            "/usr/lib/libespeak-ng.so",
-            "/usr/lib64/libespeak-ng.so.1",
-            "/usr/lib64/libespeak-ng.so",
-            "/usr/local/lib/libespeak-ng.so.1",
-            "/usr/local/lib/libespeak-ng.so",
-        ]
-        
-        for path in possible_paths:
-            if os.path.exists(path):
-                EspeakWrapper.set_library(path)
-                lib_found = True
-                break
-    
-    if not lib_found:
-        raise RuntimeError(
-            "Unable to determine the eSpeak NG library path for this operating system.\n"
-            "Please review your installation and configure the library manually.\n"
-            "Troubleshooting guide: https://github.com/pnnbao97/VieNeu-TTS/issues/5"
-        )
-
-elif platform.system() == "Darwin":  # macOS
-    # Check environment variable first
-    espeak_lib = os.environ.get('PHONEMIZER_ESPEAK_LIBRARY')
-    
-    if espeak_lib and os.path.exists(espeak_lib):
-        EspeakWrapper.set_library(espeak_lib)
-    # Try common paths for Apple Silicon
-    elif os.path.exists("/opt/homebrew/lib/libespeak-ng.dylib"):
-        EspeakWrapper.set_library("/opt/homebrew/lib/libespeak-ng.dylib")
-    # Try common paths for Intel Mac
-    elif os.path.exists("/usr/local/lib/libespeak-ng.dylib"):
-        EspeakWrapper.set_library("/usr/local/lib/libespeak-ng.dylib")
-    # Try MacPorts path
-    elif os.path.exists("/opt/local/lib/libespeak-ng.dylib"):
-        EspeakWrapper.set_library("/opt/local/lib/libespeak-ng.dylib")
-    else:
-        raise ValueError(
-            "Could not find libespeak-ng.dylib. Please:\n"
-            "1. Install via: brew install espeak\n"
-            "2. Or set environment variable: export PHONEMIZER_ESPEAK_LIBRARY=/path/to/libespeak-ng.dylib\n"
-            "3. Check installation path with: brew info espeak"
-        )
-
-else:
-    raise ValueError(
-        f"Unsupported operating system: {platform.system()}\n"
-        "eSpeak NG library configuration is only available for Windows, Linux, and macOS."
-    )
 
 def _linear_overlap_add(frames: list[np.ndarray], stride: int) -> np.ndarray:
     # original impl --> https://github.com/facebookresearch/encodec/blob/main/encodec/utils.py
@@ -116,7 +37,7 @@ def _linear_overlap_add(frames: list[np.ndarray], stride: int) -> np.ndarray:
 class VieNeuTTS:
     def __init__(
         self,
-        backbone_repo="pnnbao-ump/VieNeu-TTS",
+        backbone_repo="pnnbao-ump/VieNeu-TTS-1000h",
         backbone_device="cpu",
         codec_repo="neuphonic/neucodec",
         codec_device="cpu",
@@ -135,6 +56,9 @@ class VieNeuTTS:
         # ggml & onnx flags
         self._is_quantized_model = False
         self._is_onnx_codec = False
+
+        # backbone repo
+        self.advanced_model = backbone_repo.endswith("1000h")
 
         # HF tokenizer
         self.tokenizer = None
@@ -268,31 +192,13 @@ class VieNeuTTS:
                 recon = self.codec.decode_code(codes).cpu().numpy()
         
         return recon[0, 0, :]
-        
-    def _to_phones(self, text: str) -> str:
-        """Convert text to phonemes using phonemizer."""
-        phones = phonemize(
-            text, 
-            language="vi", 
-            backend="espeak", 
-            preserve_punctuation=True, 
-            with_stress=True, 
-            language_switch="remove-flags"
-        )
-        
-        # Handle both string and list returns
-        if isinstance(phones, list):
-            if len(phones) == 0:
-                raise ValueError(f"Phonemization failed for text: {text}")
-            return phones[0]
-        elif isinstance(phones, str):
-            return phones
-        else:
-            raise TypeError(f"Unexpected phonemize return type: {type(phones)}")
     
     def _apply_chat_template(self, ref_codes: list[int], ref_text: str, input_text: str) -> list[int]:
+        if self.advanced_model:
+            input_text = phonemize_with_dict(ref_text) + " " + phonemize_with_dict(input_text)
+        else:
+            input_text = phonemize_text(ref_text) + " " + phonemize_text(input_text)
 
-        input_text = self._to_phones(ref_text) + " " + self._to_phones(input_text)
         speech_replace = self.tokenizer.convert_tokens_to_ids("<|SPEECH_REPLACE|>")
         speech_gen_start = self.tokenizer.convert_tokens_to_ids("<|SPEECH_GENERATION_START|>")
         text_replace = self.tokenizer.convert_tokens_to_ids("<|TEXT_REPLACE|>")
@@ -340,8 +246,12 @@ class VieNeuTTS:
         return output_str
 
     def _infer_ggml(self, ref_codes: list[int], ref_text: str, input_text: str) -> str:
-        ref_text = self._to_phones(ref_text)
-        input_text = self._to_phones(input_text)
+        if self.advanced_model:
+            ref_text = phonemize_with_dict(ref_text)
+            input_text = phonemize_with_dict(input_text)
+        else:
+            ref_text = phonemize_text(ref_text)
+            input_text = phonemize_text(input_text)
 
         codes_str = "".join([f"<|speech_{idx}|>" for idx in ref_codes])
         prompt = (
@@ -359,8 +269,12 @@ class VieNeuTTS:
         return output_str
 
     def _infer_stream_ggml(self, ref_codes: torch.Tensor, ref_text: str, input_text: str) -> Generator[np.ndarray, None, None]:
-        ref_text = self._to_phones(ref_text)
-        input_text = self._to_phones(input_text)
+        if self.advanced_model:
+            ref_text = phonemize_with_dict(ref_text)
+            input_text = phonemize_with_dict(input_text)
+        else:
+            ref_text = phonemize_text(ref_text)
+            input_text = phonemize_text(input_text)
 
         codes_str = "".join([f"<|speech_{idx}|>" for idx in ref_codes])
         prompt = (

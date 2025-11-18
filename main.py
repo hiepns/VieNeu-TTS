@@ -1,5 +1,4 @@
 from vieneu_tts import VieNeuTTS
-from utils.normalize_text import VietnameseTTSNormalizer
 import soundfile as sf
 import os
 
@@ -12,8 +11,6 @@ input_texts = [
 
     "Các nhà khoa học nghiên cứu gen người phát hiện những đột biến mới liên quan đến bệnh di truyền. Điều này giúp nâng cao khả năng chẩn đoán và điều trị.",
 ]
-
-normalizer = VietnameseTTSNormalizer()
 
 output_dir = "./output_audio"
 os.makedirs(output_dir, exist_ok=True)
@@ -44,7 +41,6 @@ def main(backbone="pnnbao-ump/VieNeu-TTS", codec="neuphonic/neucodec"):
     if not ref_audio_path or not ref_text_raw:
         print("No reference audio or text provided.")
         return None
-    normalized_ref_text = normalizer.normalize(ref_text_raw)
 
     # Initialize VieNeuTTS with the desired model and codec
     tts = VieNeuTTS(
@@ -60,8 +56,7 @@ def main(backbone="pnnbao-ump/VieNeu-TTS", codec="neuphonic/neucodec"):
     # Loop through all input texts
     for i, text in enumerate(input_texts, 1):
         print(f"Generating audio for example {i}: {text}")
-        normalized_text = normalizer.normalize(text)
-        wav = tts.infer(normalized_text, ref_codes, normalized_ref_text)
+        wav = tts.infer(text, ref_codes, ref_text)
         output_path = os.path.join(output_dir, f"output_{i}.wav")
         sf.write(output_path, wav, 24000)
         print(f"Saved to {output_path}")

@@ -7,21 +7,6 @@ class VietnameseTTSNormalizer:
     """
     
     def __init__(self):
-        self.abbreviations = {
-            'tp.hcm': 'thành phố hồ chí minh',
-            'tp hcm': 'thành phố hồ chí minh',
-            'tphcm': 'thành phố hồ chí minh',
-            'hn': 'hà nội',
-            'bs': 'bác sĩ',
-            'gs': 'giáo sư',
-            'pgs': 'phó giáo sư',
-            'th.s': 'thạc sĩ',
-            'ths': 'thạc sĩ',
-            'ts': 'tiến sĩ',
-            'vv': 'vân vân',
-            '...': 'vân vân',
-        }
-        
         self.units = {
             'km': 'ki lô mét', 'dm': 'đê xi mét', 'cm': 'xen ti mét',
             'mm': 'mi li mét', 'nm': 'na nô mét', 'µm': 'mic rô mét',
@@ -52,15 +37,8 @@ class VietnameseTTSNormalizer:
             'pa': 'pát cal', 'kpa': 'ki lô pát cal', 'mpa': 'mê ga pát cal',
             'bar': 'ba', 'mbar': 'mi li ba', 'atm': 'át mốt phia', 'psi': 'pi ét xai',
             
-            'j': 'giun', 'kj': 'ki lô giun', 'mj': 'mê ga giun',
+            'j': 'giun', 'kj': 'ki lô giun',
             'cal': 'ca lo', 'kcal': 'ki lô ca lo',
-            
-            'k': 'ken vin',
-            
-            'b': 'bai', 'kb': 'ki lô bai', 'mb': 'mê ga bai',
-            'gb': 'gi ga bai', 'tb': 'te ra bai', 'pb': 'pê ta bai',
-            
-            's': 'giây', 'ms': 'mi li giây', 'min': 'phút', 'h': 'giờ',
         }
         
         self.digits = ['không', 'một', 'hai', 'ba', 'bốn', 
@@ -68,7 +46,6 @@ class VietnameseTTSNormalizer:
     
     def normalize(self, text):
         """Main normalization pipeline."""
-        text = self._expand_abbreviations(text)
         text = text.lower()
         text = self._normalize_temperature(text)
         text = self._normalize_currency(text)
@@ -241,9 +218,9 @@ class VietnameseTTSNormalizer:
         
         # Apply patterns with validation
         text = re.sub(r'\bngày\s+(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})\b', 
-                     lambda m: date_to_text(m).replace('ngày ngày', 'ngày'), text)
+                    lambda m: date_to_text(m).replace('ngày ngày', 'ngày'), text)
         text = re.sub(r'\bngày\s+(\d{1,2})[/\-](\d{1,2})[/\-](\d{2})\b', 
-                     lambda m: date_short_year(m).replace('ngày ngày', 'ngày'), text)
+                    lambda m: date_short_year(m).replace('ngày ngày', 'ngày'), text)
         text = re.sub(r'\b(\d{4})-(\d{1,2})-(\d{1,2})\b', date_iso_to_text, text)
         text = re.sub(r'\b(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})\b', date_to_text, text)
         text = re.sub(r'\b(\d{1,2})[/\-](\d{1,2})[/\-](\d{2})\b', date_short_year, text)
@@ -267,14 +244,6 @@ class VietnameseTTSNormalizer:
         
         text = re.sub(r'(\+84|84)[\s\-\.]?\d[\d\s\-\.]{7,}', phone_to_text, text)
         text = re.sub(r'\b0\d[\d\s\-\.]{8,}', phone_to_text, text)
-        return text
-    
-    def _expand_abbreviations(self, text):
-        """Expand common abbreviations before lowercasing."""
-        sorted_abbr = sorted(self.abbreviations.items(), key=lambda x: len(x[0]), reverse=True)
-        for abbr, full in sorted_abbr:
-            pattern = r'\b' + re.escape(abbr) + r'\.?'
-            text = re.sub(pattern + r'\b', ' ' + full + ' ', text, flags=re.IGNORECASE)
         return text
     
     def _normalize_numbers(self, text):
@@ -412,7 +381,6 @@ if __name__ == "__main__":
         "Liên hệ: 0912-345-678 hoặc email@example.com",
         "Tốc độ 120km/h, trọng lượng 75kg",
         "Nhiệt độ 36,5°C, độ ẩm 80%",
-        "TP.HCM HN, PGS.TS.BS. Nguyễn Văn A",
         "Số pi = 3,14159",
         "Giá trị tăng 2.5M, đạt 10B",
         "Nhiệt độ -15°C vào mùa đông",
