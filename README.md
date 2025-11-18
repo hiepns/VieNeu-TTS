@@ -17,6 +17,9 @@ Trained on ~1000 hours of high-quality Vietnamese speech, this model represents 
 Fine-tuned from **NeuTTS Air**, VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
 
 **Author:** Phạm Nguyễn Ngọc Bảo
+> 📢 Sắp ra mắt: Hỗ trợ GGUF cho CPU!
+> Chúng tôi đang gấp rút hoàn thiện phiên bản hỗ trợ GGUF để cho phép mô hình chạy hiệu quả trên CPU mà không cần GPU mạnh.
+> Phiên bản này dự kiến sẽ được ra mắt sớm, trong 1-2 tuần tới. Hãy theo dõi kho lưu trữ GitHub để nhận thông báo mới nhất!
 
 ---
 
@@ -375,6 +378,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
