@@ -15,7 +15,7 @@ input_texts = [
 output_dir = "./output_audio"
 os.makedirs(output_dir, exist_ok=True)
 
-def main(backbone="pnnbao-ump/VieNeu-TTS", codec="neuphonic/neucodec"):
+def main(backbone="pnnbao-ump/VieNeu-TTS-1000h", codec="neuphonic/neucodec"):
     """
     Trong thư mục sample, có 7 file wav và 7 file txt, các file wav và txt có cùng tên. Đây là những file chuẩn được mình chuẩn bị cho các bạn test.
     Ví dụ: id_0001.wav và id_0001.txt
