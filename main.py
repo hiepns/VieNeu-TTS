@@ -17,32 +17,39 @@ os.makedirs(output_dir, exist_ok=True)
 
 def main(backbone="pnnbao-ump/VieNeu-TTS-1000h", codec="neuphonic/neucodec"):
     """
-    Trong thư mục sample, có 7 file wav và 7 file txt, các file wav và txt có cùng tên. Đây là những file chuẩn được mình chuẩn bị cho các bạn test.
-    Ví dụ: id_0001.wav và id_0001.txt
-    Ví dụ: id_0002.wav và id_0002.txt
-    Ví dụ: id_0003.wav và id_0003.txt
-    Ví dụ: id_0004.wav và id_0004.txt
-    Ví dụ: id_0005.wav và id_0005.txt
-    Ví dụ: id_0006.wav và id_0006.txt
-    Ví dụ: id_0007.wav và id_0007.txt
-    Các file số lẻ là nam giới, các file số chẵn là nữ giới. Các bạn có thể chọn file wav và txt tương ứng để test.
-    Lưu ý: model vẫn có thể clone giọng của audio bạn đưa vào (kèm text tương ứng). Tuy nhiên, chất lượng có thể không được tốt như các file trong thư mục sample. Các bạn có thể finetune model này trên giọng các bạn cần clone để có chất lượng tốt nhất.
-    Các bạn có thể tham khảo cách finetune model tại https://github.com/pnnbao-ump/VieNeuTTS/blob/main/finetune.ipynb
+    In the sample directory, there are 7 wav files and 7 txt files with matching names.
+    These are pre-prepared reference files for testing:
+    - id_0001.wav + id_0001.txt
+    - id_0002.wav + id_0002.txt
+    - id_0003.wav + id_0003.txt
+    - id_0004.wav + id_0004.txt
+    - id_0005.wav + id_0005.txt
+    - id_0006.wav + id_0006.txt
+    - id_0007.wav + id_0007.txt
+    
+    Odd numbers = Male voices
+    Even numbers = Female voices
+    
+    Note: The model can clone any voice you provide (with corresponding text).
+    However, quality may not match the sample files. For best results, finetune
+    the model on your target voice. See finetune guide at:
+    https://github.com/pnnbao-ump/VieNeuTTS/blob/main/finetune.ipynb
     """
-    # Nam miền Nam
-    ref_audio_path = "./sample/id_0004.wav"
-    ref_text = "./sample/id_0004.txt"
-    # Nữ miền Nam
+    # Male voice (South accent)
+    ref_audio_path = "./sample/id_0001.wav"
+    ref_text_path = "./sample/id_0001.txt"
+    
+    # Female voice (South accent) - uncomment to use
     # ref_audio_path = "./sample/id_0002.wav"
-    # ref_text = "./sample/id_0002.txt"
+    # ref_text_path = "./sample/id_0002.txt"
 
-    ref_text_path = ref_text
     ref_text_raw = open(ref_text_path, "r", encoding="utf-8").read()
+    
     if not ref_audio_path or not ref_text_raw:
         print("No reference audio or text provided.")
         return None
 
-    # Initialize VieNeuTTS with the desired model and codec
+    # Initialize VieNeuTTS-1000h
     tts = VieNeuTTS(
         backbone_repo=backbone,
         backbone_device="cuda",
@@ -50,16 +57,16 @@ def main(backbone="pnnbao-ump/VieNeu-TTS-1000h", codec="neuphonic/neucodec"):
         codec_device="cuda"
     )
 
-    print("Encoding reference audio")
+    print("Encoding reference audio...")
     ref_codes = tts.encode_reference(ref_audio_path)
 
-    # Loop through all input texts
+    # Generate speech for all input texts
     for i, text in enumerate(input_texts, 1):
-        print(f"Generating audio for example {i}: {text}")
-        wav = tts.infer(text, ref_codes, ref_text)
+        print(f"Generating audio {i}/{len(input_texts)}: {text[:50]}...")
+        wav = tts.infer(text, ref_codes, ref_text_raw)
         output_path = os.path.join(output_dir, f"output_{i}.wav")
         sf.write(output_path, wav, 24000)
-        print(f"Saved to {output_path}")
+        print(f"✓ Saved to {output_path}")
 
 if __name__ == "__main__":
     main()
