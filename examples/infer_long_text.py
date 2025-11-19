@@ -161,7 +161,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--backbone",
-        default="pnnbao-ump/VieNeu-TTS",
+        default="pnnbao-ump/VieNeu-TTS-1000h",
         help="Backbone repository ID or local path.",
     )
     parser.add_argument(
