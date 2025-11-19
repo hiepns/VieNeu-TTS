@@ -4,12 +4,9 @@ import re
 import sys
 from pathlib import Path
 from typing import List
-
 import numpy as np
 import soundfile as sf
 import torch
-
-from utils.normalize_text import VietnameseTTSNormalizer
 from vieneu_tts import VieNeuTTS
 
 
@@ -68,7 +65,7 @@ def infer_long_text(
     output_path: str,
     chunk_dir: str | None = None,
     max_chars: int = 256,
-    backbone_repo: str = "pnnbao-ump/VieNeu-TTS",
+    backbone_repo: str = "pnnbao-ump/VieNeu-TTS-1000h",
     codec_repo: str = "neuphonic/neucodec",
     device: str | None = None,
 ) -> str:
@@ -78,7 +75,6 @@ def infer_long_text(
     Returns:
         The path to the combined audio file.
     """
-    normalizer = VietnameseTTSNormalizer()
 
     device = device or ("cuda" if torch.cuda.is_available() else "cpu")
     if device not in {"cuda", "cpu"}:
@@ -98,7 +94,6 @@ def infer_long_text(
         os.makedirs(chunk_dir, exist_ok=True)
 
     ref_text_raw = Path(ref_text_path).read_text(encoding="utf-8")
-    normalized_ref_text = normalizer.normalize(ref_text_raw)
 
     tts = VieNeuTTS(
         backbone_repo=backbone_repo,
@@ -114,8 +109,7 @@ def infer_long_text(
 
     for idx, chunk in enumerate(chunks, start=1):
         print(f"🎙️ Chunk {idx}/{len(chunks)} | {len(chunk)} chars")
-        normalized_chunk = normalizer.normalize(chunk)
-        wav = tts.infer(normalized_chunk, ref_codes, normalized_ref_text)
+        wav = tts.infer(chunk, ref_codes, ref_text_raw)
         generated_segments.append(wav)
 
         if chunk_dir:
