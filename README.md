@@ -72,7 +72,6 @@ If you find this project useful, please consider supporting its development:
 - **Output watermark:** Enabled by default
 - **Training data:**  
   - [VieNeu-TTS-1000h](https://huggingface.co/datasets/pnnbao-ump/VieNeu-TTS-1000h) — 443,641 curated Vietnamese samples  
-  - Fine-tuned from a base model trained on [Emilia Dataset](https://huggingface.co/datasets/amphion/Emilia-Dataset)
 
 ---
 
@@ -380,6 +379,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
