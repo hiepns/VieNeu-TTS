@@ -78,6 +78,8 @@ If you find this project useful, please consider supporting its development:
 
 ## 🏁 Getting Started
 
+> **📺 Hướng dẫn cài đặt bằng tiếng Việt**: Xem video chi tiết tại [Facebook Reel](https://www.facebook.com/reel/1362972618623766)
+
 ### 1. Clone the repository
 
 ```bash
@@ -378,6 +380,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
