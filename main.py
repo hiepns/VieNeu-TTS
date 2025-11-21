@@ -1,6 +1,9 @@
 from vieneu_tts import VieNeuTTS
 import soundfile as sf
+import torch
 import os
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 input_texts = [
     "Các khóa học trực tuyến đang giúp học sinh tiếp cận kiến thức mọi lúc mọi nơi. Giáo viên sử dụng video, bài tập tương tác và thảo luận trực tuyến để nâng cao hiệu quả học tập.",
@@ -15,7 +18,7 @@ input_texts = [
 output_dir = "./output_audio"
 os.makedirs(output_dir, exist_ok=True)
 
-def main(backbone="pnnbao-ump/VieNeu-TTS-1000h", codec="neuphonic/neucodec"):
+def main(backbone="pnnbao-ump/VieNeu-TTS", codec="neuphonic/neucodec"):
     """
     In the sample directory, there are 7 wav files and 7 txt files with matching names.
     These are pre-prepared reference files for testing:
@@ -52,9 +55,9 @@ def main(backbone="pnnbao-ump/VieNeu-TTS-1000h", codec="neuphonic/neucodec"):
     # Initialize VieNeuTTS-1000h
     tts = VieNeuTTS(
         backbone_repo=backbone,
-        backbone_device="cuda",
+        backbone_device=device,
         codec_repo=codec,
-        codec_device="cuda"
+        codec_device=device
     )
 
     print("Encoding reference audio...")

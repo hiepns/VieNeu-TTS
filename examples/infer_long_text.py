@@ -65,7 +65,7 @@ def infer_long_text(
     output_path: str,
     chunk_dir: str | None = None,
     max_chars: int = 256,
-    backbone_repo: str = "pnnbao-ump/VieNeu-TTS-1000h",
+    backbone_repo: str = "pnnbao-ump/VieNeu-TTS",
     codec_repo: str = "neuphonic/neucodec",
     device: str | None = None,
 ) -> str:
@@ -161,7 +161,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--backbone",
-        default="pnnbao-ump/VieNeu-TTS-1000h",
+        default="pnnbao-ump/VieNeu-TTS",
         help="Backbone repository ID or local path.",
     )
     parser.add_argument(

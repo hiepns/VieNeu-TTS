@@ -37,7 +37,7 @@ def _linear_overlap_add(frames: list[np.ndarray], stride: int) -> np.ndarray:
 class VieNeuTTS:
     def __init__(
         self,
-        backbone_repo="pnnbao-ump/VieNeu-TTS-1000h",
+        backbone_repo="pnnbao-ump/VieNeu-TTS",
         backbone_device="cpu",
         codec_repo="neuphonic/neucodec",
         codec_device="cpu",
@@ -56,9 +56,6 @@ class VieNeuTTS:
         # ggml & onnx flags
         self._is_quantized_model = False
         self._is_onnx_codec = False
-
-        # backbone repo
-        self.advanced_model = backbone_repo.endswith("1000h")
 
         # HF tokenizer
         self.tokenizer = None
@@ -194,10 +191,7 @@ class VieNeuTTS:
         return recon[0, 0, :]
     
     def _apply_chat_template(self, ref_codes: list[int], ref_text: str, input_text: str) -> list[int]:
-        if self.advanced_model:
-            input_text = phonemize_with_dict(ref_text) + " " + phonemize_with_dict(input_text)
-        else:
-            input_text = phonemize_text(ref_text) + " " + phonemize_text(input_text)
+        input_text = phonemize_with_dict(ref_text) + " " + phonemize_with_dict(input_text)
 
         speech_replace = self.tokenizer.convert_tokens_to_ids("<|SPEECH_REPLACE|>")
         speech_gen_start = self.tokenizer.convert_tokens_to_ids("<|SPEECH_GENERATION_START|>")
@@ -246,12 +240,8 @@ class VieNeuTTS:
         return output_str
 
     def _infer_ggml(self, ref_codes: list[int], ref_text: str, input_text: str) -> str:
-        if self.advanced_model:
-            ref_text = phonemize_with_dict(ref_text)
-            input_text = phonemize_with_dict(input_text)
-        else:
-            ref_text = phonemize_text(ref_text)
-            input_text = phonemize_text(input_text)
+        ref_text = phonemize_with_dict(ref_text)
+        input_text = phonemize_with_dict(input_text)
 
         codes_str = "".join([f"<|speech_{idx}|>" for idx in ref_codes])
         prompt = (
@@ -269,12 +259,8 @@ class VieNeuTTS:
         return output_str
 
     def _infer_stream_ggml(self, ref_codes: torch.Tensor, ref_text: str, input_text: str) -> Generator[np.ndarray, None, None]:
-        if self.advanced_model:
-            ref_text = phonemize_with_dict(ref_text)
-            input_text = phonemize_with_dict(input_text)
-        else:
-            ref_text = phonemize_text(ref_text)
-            input_text = phonemize_text(input_text)
+        ref_text = phonemize_with_dict(ref_text)
+        input_text = phonemize_with_dict(input_text)
 
         codes_str = "".join([f"<|speech_{idx}|>" for idx in ref_codes])
         prompt = (
