@@ -1,11 +1,11 @@
 # VieNeu-TTS
 
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/pnnbao97/VieNeu-TTS)
-[![Hugging Face](https://img.shields.io/badge/Hugging%20Face-Model-yellow)](https://huggingface.co/pnnbao-ump/VieNeu-TTS-1000h)
+[![Hugging Face](https://img.shields.io/badge/Hugging%20Face-Model-yellow)](https://huggingface.co/pnnbao-ump/VieNeu-TTS)
 
 <img width="899" height="615" alt="Untitled" src="https://github.com/user-attachments/assets/7eb9b816-6ab7-4049-866f-f85e36cb9c6f" />
 
-**VieNeu-TTS-1000h** is an advanced on-device Vietnamese Text-to-Speech (TTS) model with **instant voice cloning**.  
+**VieNeu-TTS** is an advanced on-device Vietnamese Text-to-Speech (TTS) model with **instant voice cloning**.  
 
 Trained on ~1000 hours of high-quality Vietnamese speech, this model represents a significant upgrade from VieNeu-TTS-140h with the following improvements:
 
@@ -162,7 +162,10 @@ VieNeu-TTS/
 ```python
 from vieneu_tts import VieNeuTTS
 import soundfile as sf
+import torch
 import os
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 input_texts = [
     "Các khóa học trực tuyến đang giúp học sinh tiếp cận kiến thức mọi lúc mọi nơi. Giáo viên sử dụng video, bài tập tương tác và thảo luận trực tuyến để nâng cao hiệu quả học tập.",
@@ -177,7 +180,7 @@ input_texts = [
 output_dir = "./output_audio"
 os.makedirs(output_dir, exist_ok=True)
 
-def main(backbone="pnnbao-ump/VieNeu-TTS-1000h", codec="neuphonic/neucodec"):
+def main(backbone="pnnbao-ump/VieNeu-TTS", codec="neuphonic/neucodec"):
     """
     In the sample directory, there are 7 wav files and 7 txt files with matching names.
     These are pre-prepared reference files for testing:
@@ -214,9 +217,9 @@ def main(backbone="pnnbao-ump/VieNeu-TTS-1000h", codec="neuphonic/neucodec"):
     # Initialize VieNeuTTS-1000h
     tts = VieNeuTTS(
         backbone_repo=backbone,
-        backbone_device="cuda",
+        backbone_device=device,
         codec_repo=codec,
-        codec_device="cuda"
+        codec_device=device
     )
 
     print("Encoding reference audio...")
@@ -379,6 +382,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
