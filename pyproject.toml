@@ -6,9 +6,9 @@ name = "pytorch"
 url = "https://download.pytorch.org/whl/cu118"
 
 [project]
-name = "VieNeuTTS"
+name = "VieNeu-TTS"
 version = "0.1.0"
-description = "VieNeuTTS - TTS for Vietnamese language"
+description = "VieNeu-TTS - TTS for Vietnamese language"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
