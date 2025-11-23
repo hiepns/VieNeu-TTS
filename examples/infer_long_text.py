@@ -135,8 +135,16 @@ def parse_args() -> argparse.Namespace:
         "--text-file",
         help="Path to a UTF-8 text file to synthesize.",
     )
-    parser.add_argument("--ref-audio", required=True, help="Path to reference audio (.wav).")
-    parser.add_argument("--ref-text", required=True, help="Path to reference text (UTF-8).")
+    parser.add_argument(
+        "--ref-audio",
+        default="./sample/Vĩnh (nam miền Nam).wav",
+        help="Path to reference audio (.wav). Default: ./sample/Vĩnh (nam miền Nam).wav"
+    )
+    parser.add_argument(
+        "--ref-text",
+        default="./sample/Vĩnh (nam miền Nam).txt",
+        help="Path to reference text (UTF-8). Default: ./sample/Vĩnh (nam miền Nam).txt"
+    )
     parser.add_argument(
         "--output",
         default="./output_audio/long_text.wav",

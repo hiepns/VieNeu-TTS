@@ -20,18 +20,18 @@ os.makedirs(output_dir, exist_ok=True)
 
 def main(backbone="pnnbao-ump/VieNeu-TTS", codec="neuphonic/neucodec"):
     """
-    In the sample directory, there are 7 wav files and 7 txt files with matching names.
-    These are pre-prepared reference files for testing:
-    - id_0001.wav + id_0001.txt
-    - id_0002.wav + id_0002.txt
-    - id_0003.wav + id_0003.txt
-    - id_0004.wav + id_0004.txt
-    - id_0005.wav + id_0005.txt
-    - id_0006.wav + id_0006.txt
-    - id_0007.wav + id_0007.txt
-    
-    Odd numbers = Male voices
-    Even numbers = Female voices
+    In the sample directory, there are wav files and txt files with matching names.
+    These are pre-prepared reference files for testing with Vietnamese names:
+    - Bình (nam miền Bắc) - Male, North accent
+    - Tuyên (nam miền Bắc) - Male, North accent
+    - Nguyên (nam miền Nam) - Male, South accent
+    - Sơn (nam miền Nam) - Male, South accent
+    - Vĩnh (nam miền Nam) - Male, South accent
+    - Hương (nữ miền Bắc) - Female, North accent
+    - Ly (nữ miền Bắc) - Female, North accent
+    - Ngọc (nữ miền Bắc) - Female, North accent
+    - Đoan (nữ miền Nam) - Female, South accent
+    - Dung (nữ miền Nam) - Female, South accent
     
     Note: The model can clone any voice you provide (with corresponding text).
     However, quality may not match the sample files. For best results, finetune
@@ -39,12 +39,12 @@ def main(backbone="pnnbao-ump/VieNeu-TTS", codec="neuphonic/neucodec"):
     https://github.com/pnnbao-ump/VieNeuTTS/blob/main/finetune.ipynb
     """
     # Male voice (South accent)
-    ref_audio_path = "./sample/id_0001.wav"
-    ref_text_path = "./sample/id_0001.txt"
+    ref_audio_path = "./sample/Vĩnh (nam miền Nam).wav"
+    ref_text_path = "./sample/Vĩnh (nam miền Nam).txt"
     
     # Female voice (South accent) - uncomment to use
-    # ref_audio_path = "./sample/id_0002.wav"
-    # ref_text_path = "./sample/id_0002.txt"
+    # ref_audio_path = "./sample/Đoan (nữ miền Nam).wav"
+    # ref_text_path = "./sample/Đoan (nữ miền Nam).txt"
 
     ref_text_raw = open(ref_text_path, "r", encoding="utf-8").read()
     
