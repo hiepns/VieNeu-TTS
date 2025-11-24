@@ -142,9 +142,21 @@ VieNeu-TTS/
 ├── main.py                    # Basic batch inference script
 ├── output_audio/              # Generated audio (created when running scripts)
 ├── sample/                    # Reference voices (audio + transcript pairs)
+│   ├── Bình (nam miền Bắc).wav/txt
+│   ├── Đoan (nữ miền Nam).wav/txt
+│   ├── Dung (nữ miền Nam).wav/txt
+│   ├── Hương (nữ miền Bắc).wav/txt
+│   ├── Ly (nữ miền Bắc).wav/txt
+│   ├── Ngọc (nữ miền Bắc).wav/txt
+│   ├── Nguyên (nam miền Nam).wav/txt
+│   ├── Sơn (nam miền Nam).wav/txt
+│   ├── Tuyên (nam miền Bắc).wav/txt
+│   └── Vĩnh (nam miền Nam).wav/txt
 ├── utils/
 │   ├── __init__.py
-│   └── normalize_text.py      # Vietnamese text normalization pipeline
+│   ├── normalize_text.py      # Vietnamese text normalization pipeline
+│   ├── phonemize_text.py      # Text to phoneme conversion
+│   └── phoneme_dict.json      # Phoneme dictionary
 ├── vieneu_tts/
 │   ├── __init__.py
 │   └── vieneu_tts.py          # Core VieNeuTTS implementation
@@ -182,18 +194,18 @@ os.makedirs(output_dir, exist_ok=True)
 
 def main(backbone="pnnbao-ump/VieNeu-TTS", codec="neuphonic/neucodec"):
     """
-    In the sample directory, there are 7 wav files and 7 txt files with matching names.
-    These are pre-prepared reference files for testing:
-    - id_0001.wav + id_0001.txt
-    - id_0002.wav + id_0002.txt
-    - id_0003.wav + id_0003.txt
-    - id_0004.wav + id_0004.txt
-    - id_0005.wav + id_0005.txt
-    - id_0006.wav + id_0006.txt
-    - id_0007.wav + id_0007.txt
-    
-    Odd numbers = Male voices
-    Even numbers = Female voices
+    In the sample directory, there are wav files and txt files with matching names.
+    These are pre-prepared reference files for testing with Vietnamese names:
+    - Bình (nam miền Bắc) - Male, North accent
+    - Tuyên (nam miền Bắc) - Male, North accent
+    - Nguyên (nam miền Nam) - Male, South accent
+    - Sơn (nam miền Nam) - Male, South accent
+    - Vĩnh (nam miền Nam) - Male, South accent
+    - Hương (nữ miền Bắc) - Female, North accent
+    - Ly (nữ miền Bắc) - Female, North accent
+    - Ngọc (nữ miền Bắc) - Female, North accent
+    - Đoan (nữ miền Nam) - Female, South accent
+    - Dung (nữ miền Nam) - Female, South accent
     
     Note: The model can clone any voice you provide (with corresponding text).
     However, quality may not match the sample files. For best results, finetune
@@ -201,12 +213,12 @@ def main(backbone="pnnbao-ump/VieNeu-TTS", codec="neuphonic/neucodec"):
     https://github.com/pnnbao-ump/VieNeuTTS/blob/main/finetune.ipynb
     """
     # Male voice (South accent)
-    ref_audio_path = "./sample/id_0001.wav"
-    ref_text_path = "./sample/id_0001.txt"
+    ref_audio_path = "./sample/Vĩnh (nam miền Nam).wav"
+    ref_text_path = "./sample/Vĩnh (nam miền Nam).txt"
     
     # Female voice (South accent) - uncomment to use
-    # ref_audio_path = "./sample/id_0002.wav"
-    # ref_text_path = "./sample/id_0002.txt"
+    # ref_audio_path = "./sample/Đoan (nữ miền Nam).wav"
+    # ref_text_path = "./sample/Đoan (nữ miền Nam).txt"
 
     ref_text_raw = open(ref_text_path, "r", encoding="utf-8").read()
     
@@ -254,7 +266,7 @@ python gradio_app.py
 
 Then open `http://127.0.0.1:7860` to:
 
-- Pick one of six reference voices
+- Pick one of ten reference voices (5 male, 5 female; North and South accents)
 - Upload your own reference audio + transcript
 - Enter up to 250 characters per request (recommended)
 - Preview or download the synthesized audio
@@ -266,8 +278,8 @@ Then open `http://127.0.0.1:7860` to:
 ```bash
 python -m examples.infer_long_text.py \
   --text-file examples/sample_long_text.txt \
-  --ref-audio sample/id_0001.wav \
-  --ref-text sample/id_0001.txt \
+  --ref-audio sample/Vĩnh\ \(nam\ miền\ Nam\).wav \
+  --ref-text sample/Vĩnh\ \(nam\ miền\ Nam\).txt \
   --output output_audio/sample_long_text.wav
 ```
 
@@ -279,16 +291,20 @@ Use `--text "raw paragraph here"` to infer without creating a file.
 
 ## 🔈 Reference Voices (`sample/`)
 
-| File      | Gender | Accent | Description        |
-|-----------|--------|--------|--------------------|
-| id_0001   | Male   | South  | Male voice 1       |
-| id_0002   | Female | South  | Female voice 1     |
-| id_0003   | Male   | South  | Male voice 2       |
-| id_0004   | Female | South  | Female voice 2     |
-| id_0005   | Male   | South  | Male voice 3       |
-| id_0007   | Male   | South  | Male voice 4       |
+| File                    | Gender | Accent | Description        |
+|-------------------------|--------|--------|--------------------|
+| Bình (nam miền Bắc)     | Male   | North  | Male voice, North accent |
+| Tuyên (nam miền Bắc)    | Male   | North  | Male voice, North accent |
+| Nguyên (nam miền Nam)   | Male   | South  | Male voice, South accent |
+| Sơn (nam miền Nam)      | Male   | South  | Male voice, South accent |
+| Vĩnh (nam miền Nam)     | Male   | South  | Male voice, South accent |
+| Hương (nữ miền Bắc)     | Female | North  | Female voice, North accent |
+| Ly (nữ miền Bắc)        | Female | North  | Female voice, North accent |
+| Ngọc (nữ miền Bắc)      | Female | North  | Female voice, North accent |
+| Đoan (nữ miền Nam)      | Female | South  | Female voice, South accent |
+| Dung (nữ miền Nam)      | Female | South  | Female voice, South accent |
 
-Odd IDs correspond to male voices; even IDs correspond to female voices.
+Each reference voice includes both a `.wav` audio file and a matching `.txt` transcript file.
 
 ---
 
