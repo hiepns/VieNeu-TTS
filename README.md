@@ -245,7 +245,7 @@ uv run main.py
 This script runs several normalized sentences using the bundled sample voice and writes `output_*.wav` files under `output_audio/`.
 
 ### Gradio web demo
-[<img width="600" height="595" alt="VieNeu-TTS" src="https://github.com/user-attachments/assets/66c098c4-d184-4e7a-826a-ba8c6c556fab" />](https://github.com/user-attachments/assets/5ad53bc9-e816-41a7-9474-ea470b1cbfdd)
+[<img width="600" height="595" alt="VieNeu-TTS" src="https://github.com/user-attachments/assets/01f3016c-8b59-4a48-bc0e-c2248c22cec5" />](https://github.com/user-attachments/assets/01f3016c-8b59-4a48-bc0e-c2248c22cec5)
 
 ```bash
 uv run gradio_app.py
@@ -385,6 +385,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
