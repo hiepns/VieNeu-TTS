@@ -113,20 +113,7 @@ paru -S aur/espeak-ng
 ### 3. Install Python dependencies (Python ≥ 3.11)
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate        # or .venv\Scripts\activate on Windows
-pip install -r requirements.txt
-
-# Optional alternatives
-uv pip install -r requirements.txt
-pip install -e .
-```
-
-If you intend to run on GPU, install the matching CUDA build of PyTorch:
-
-```bash
-# Example for CUDA 11.8
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+uv sync
 ```
 
 ---
@@ -252,7 +239,7 @@ if __name__ == "__main__":
 ### CLI example (`main.py`)
 
 ```bash
-python main.py
+uv run main.py
 ```
 
 This script runs several normalized sentences using the bundled sample voice and writes `output_*.wav` files under `output_audio/`.
@@ -261,7 +248,7 @@ This script runs several normalized sentences using the bundled sample voice and
 [<img width="600" height="595" alt="VieNeu-TTS" src="https://github.com/user-attachments/assets/66c098c4-d184-4e7a-826a-ba8c6c556fab" />](https://github.com/user-attachments/assets/5ad53bc9-e816-41a7-9474-ea470b1cbfdd)
 
 ```bash
-python gradio_app.py
+uv run gradio_app.py
 ```
 
 Then open `http://127.0.0.1:7860` to:
@@ -398,6 +385,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
