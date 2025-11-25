@@ -77,7 +77,7 @@ If you find this project useful, please consider supporting its development:
 
 ## 🏁 Getting Started
 
-> **📺 Hướng dẫn cài đặt bằng tiếng Việt**: Xem video chi tiết tại [Facebook Reel](https://www.facebook.com/reel/1362972618623766)
+> **📺 Hướng dẫn cài đặt bằng tiếng Việt**: Xem video chi tiết tại [Facebook Reel](https://www.facebook.com/reel/1362972618623766)  
 > **🎙️ Muốn VieNeu-TTS nói bằng giọng của bạn?** [Xem hướng dẫn](https://www.facebook.com/100027984306273/videos/1938960490025021/)
 
 ### 1. Clone the repository
@@ -386,6 +386,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
