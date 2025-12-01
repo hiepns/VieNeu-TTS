@@ -34,9 +34,9 @@ except Exception as e:
 
 # --- 2. DATA ---
 VOICE_SAMPLES = {
+    "Tuyên (nam miền Bắc)": {"audio": "./sample/Tuyên (nam miền Bắc).wav", "text": "./sample/Tuyên (nam miền Bắc).txt"},
     "Bình (nam miền Bắc)": {"audio": "./sample/Bình (nam miền Bắc).wav", "text": "./sample/Bình (nam miền Bắc).txt"},
     "Vĩnh (nam miền Nam)": {"audio": "./sample/Vĩnh (nam miền Nam).wav", "text": "./sample/Vĩnh (nam miền Nam).txt"},
-    "Tuyên (nam miền Bắc)": {"audio": "./sample/Tuyên (nam miền Bắc).wav", "text": "./sample/Tuyên (nam miền Bắc).txt"},
     "Nguyên (nam miền Nam)": {"audio": "./sample/Nguyên (nam miền Nam).wav", "text": "./sample/Nguyên (nam miền Nam).txt"},
     "Sơn (nam miền Nam)": {"audio": "./sample/Sơn (nam miền Nam).wav", "text": "./sample/Sơn (nam miền Nam).txt"},
     "Hương (nữ miền Bắc)": {"audio": "./sample/Hương (nữ miền Bắc).wav", "text": "./sample/Hương (nữ miền Bắc).txt"},
@@ -231,7 +231,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS Studio") as demo:
                 label="Nhập văn bản",
                 placeholder="Nhập nội dung tiếng Việt cần chuyển thành giọng nói...",
                 lines=4,
-                value="Hà Nội những ngày vào thu mang một vẻ đẹp trầm mặc và cổ kính đến lạ thường. Đi dạo quanh Hồ Gươm vào sáng sớm, hít hà mùi hoa sữa nồng nàn và thưởng thức chút cốm làng Vòng là trải nghiệm khó quên.",
+                value="Sự bùng nổ của trí tuệ nhân tạo đang định hình lại cách chúng ta làm việc và sinh sống. Từ xe tự lái đến trợ lý ảo thông minh, công nghệ đang dần xóa nhòa ranh giới giữa thực tại và những bộ phim viễn tưởng.",
                 show_label=False
             )
             
@@ -244,7 +244,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS Studio") as demo:
                 with gr.TabItem("👤 Giọng có sẵn (Preset)", id="preset_mode"):
                     voice_select = gr.Dropdown(
                         choices=list(VOICE_SAMPLES.keys()),
-                        value="Bình (nam miền Bắc)",
+                        value="Tuyên (nam miền Bắc)",
                         label="Danh sách giọng",
                         interactive=True
                     )
