@@ -34,9 +34,9 @@ except Exception as e:
 
 # --- 2. DATA ---
 VOICE_SAMPLES = {
+    "Vĩnh (nam miền Nam)": {"audio": "./sample/Vĩnh (nam miền Nam).wav", "text": "./sample/Vĩnh (nam miền Nam).txt"},
     "Tuyên (nam miền Bắc)": {"audio": "./sample/Tuyên (nam miền Bắc).wav", "text": "./sample/Tuyên (nam miền Bắc).txt"},
     "Bình (nam miền Bắc)": {"audio": "./sample/Bình (nam miền Bắc).wav", "text": "./sample/Bình (nam miền Bắc).txt"},
-    "Vĩnh (nam miền Nam)": {"audio": "./sample/Vĩnh (nam miền Nam).wav", "text": "./sample/Vĩnh (nam miền Nam).txt"},
     "Nguyên (nam miền Nam)": {"audio": "./sample/Nguyên (nam miền Nam).wav", "text": "./sample/Nguyên (nam miền Nam).txt"},
     "Sơn (nam miền Nam)": {"audio": "./sample/Sơn (nam miền Nam).wav", "text": "./sample/Sơn (nam miền Nam).txt"},
     "Hương (nữ miền Bắc)": {"audio": "./sample/Hương (nữ miền Bắc).wav", "text": "./sample/Hương (nữ miền Bắc).txt"},
@@ -244,7 +244,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS Studio") as demo:
                 with gr.TabItem("👤 Giọng có sẵn (Preset)", id="preset_mode"):
                     voice_select = gr.Dropdown(
                         choices=list(VOICE_SAMPLES.keys()),
-                        value="Tuyên (nam miền Bắc)",
+                        value="Vĩnh (nam miền Nam)",
                         label="Danh sách giọng",
                         interactive=True
                     )
