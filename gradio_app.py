@@ -190,18 +190,15 @@ EXAMPLES_LIST = [
     
     # Nam Miền Nam
     ["Để đảm bảo tiến độ dự án quan trọng này, chúng ta cần tập trung tối đa nguồn lực và phối hợp chặt chẽ giữa các phòng ban. Mọi khó khăn phát sinh cần được báo cáo ngay lập tức để ban lãnh đạo xử lý kịp thời.", "Sơn (nam miền Nam)"],
-    
+
     # Nữ Miền Nam
-    ["Dạ em chào anh chị, hiện tại bên em đang có chương trình ưu đãi đặc biệt cho căn hộ hướng sông này. Với thiết kế hiện đại và không gian xanh mát, đây chắc chắn là tổ ấm lý tưởng mà gia đình mình đang tìm kiếm.", "Đoan (nữ miền Nam)"],
+    ["Dạ em chào anh chị, hiện tại bên em đang có chương trình ưu đãi đặc biệt cho căn hộ hướng sông này. Với thiết kế hiện đại và không gian xanh mát, đây chắc chắn là tổ ấm lý tưởng mà gia đình mình đang tìm kiếm.", "Ly (nữ miền Bắc)"],
     
     # Nữ Miền Bắc
     ["Dưới cơn mưa phùn lất phất của những ngày cuối đông, em khẽ nép vào vai anh, cảm nhận hơi ấm lan tỏa. Những khoảnh khắc bình dị như thế này khiến em nhận ra rằng, hạnh phúc đôi khi chỉ đơn giản là được ở bên nhau.", "Ngọc (nữ miền Bắc)"],
-
-    # Nữ Miền Bắc
-    ["Thay mặt phi hành đoàn, xin chào mừng quý khách đến với chuyến bay vi en 2024. Quý khách vui lòng thắt dây an toàn, dựng thẳng lưng ghế và gập bàn ăn phía trước để chuẩn bị cho máy bay cất cánh trong ít phút nữa.", "Hương (nữ miền Bắc)"],
     
     # Nữ Miền Bắc
-    ["Ngày xửa ngày xưa, ở một ngôi làng nọ có cô Tấm xinh đẹp, nết na nhưng sớm mồ côi mẹ. Dù bị mẹ kế và Cám hãm hại đủ đường, Tấm vẫn giữ được tấm lòng lương thiện và cuối cùng tìm được hạnh phúc xứng đáng.", "Ly (nữ miền Bắc)"],
+    ["Ngày xửa ngày xưa, ở một ngôi làng nọ có cô Tấm xinh đẹp, nết na nhưng sớm mồ côi mẹ. Dù bị mẹ kế và Cám hãm hại đủ đường, Tấm vẫn giữ được tấm lòng lương thiện và cuối cùng tìm được hạnh phúc xứng đáng.", "Hương (nữ miền Bắc)"],
 ]
 
 with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS Studio") as demo:
