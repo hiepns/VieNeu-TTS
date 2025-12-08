@@ -34,15 +34,14 @@ except Exception as e:
 
 # --- 2. DATA ---
 VOICE_SAMPLES = {
-    "Vĩnh (nam miền Nam)": {"audio": "./sample/Vĩnh (nam miền Nam).wav", "text": "./sample/Vĩnh (nam miền Nam).txt"},
     "Tuyên (nam miền Bắc)": {"audio": "./sample/Tuyên (nam miền Bắc).wav", "text": "./sample/Tuyên (nam miền Bắc).txt"},
+    "Vĩnh (nam miền Nam)": {"audio": "./sample/Vĩnh (nam miền Nam).wav", "text": "./sample/Vĩnh (nam miền Nam).txt"},
     "Bình (nam miền Bắc)": {"audio": "./sample/Bình (nam miền Bắc).wav", "text": "./sample/Bình (nam miền Bắc).txt"},
     "Nguyên (nam miền Nam)": {"audio": "./sample/Nguyên (nam miền Nam).wav", "text": "./sample/Nguyên (nam miền Nam).txt"},
     "Sơn (nam miền Nam)": {"audio": "./sample/Sơn (nam miền Nam).wav", "text": "./sample/Sơn (nam miền Nam).txt"},
-    "Hương (nữ miền Bắc)": {"audio": "./sample/Hương (nữ miền Bắc).wav", "text": "./sample/Hương (nữ miền Bắc).txt"},
-    "Ly (nữ miền Bắc)": {"audio": "./sample/Ly (nữ miền Bắc).wav", "text": "./sample/Ly (nữ miền Bắc).txt"},
-    "Ngọc (nữ miền Bắc)": {"audio": "./sample/Ngọc (nữ miền Bắc).wav", "text": "./sample/Ngọc (nữ miền Bắc).txt"},
     "Đoan (nữ miền Nam)": {"audio": "./sample/Đoan (nữ miền Nam).wav", "text": "./sample/Đoan (nữ miền Nam).txt"},
+    "Ngọc (nữ miền Bắc)": {"audio": "./sample/Ngọc (nữ miền Bắc).wav", "text": "./sample/Ngọc (nữ miền Bắc).txt"},
+    "Ly (nữ miền Bắc)": {"audio": "./sample/Ly (nữ miền Bắc).wav", "text": "./sample/Ly (nữ miền Bắc).txt"},
     "Dung (nữ miền Nam)": {"audio": "./sample/Dung (nữ miền Nam).wav", "text": "./sample/Dung (nữ miền Nam).txt"}
 }
 
@@ -192,13 +191,13 @@ EXAMPLES_LIST = [
     ["Để đảm bảo tiến độ dự án quan trọng này, chúng ta cần tập trung tối đa nguồn lực và phối hợp chặt chẽ giữa các phòng ban. Mọi khó khăn phát sinh cần được báo cáo ngay lập tức để ban lãnh đạo xử lý kịp thời.", "Sơn (nam miền Nam)"],
 
     # Nữ Miền Nam
+    ["Ngày xửa ngày xưa, ở một ngôi làng nọ có cô Tấm xinh đẹp, nết na nhưng sớm mồ côi mẹ. Dù bị mẹ kế và Cám hãm hại đủ đường, Tấm vẫn giữ được tấm lòng lương thiện và cuối cùng tìm được hạnh phúc xứng đáng.", "Đoan (nữ miền Nam)"],
+    
+    # Nữ Miền Bắc
     ["Dạ em chào anh chị, hiện tại bên em đang có chương trình ưu đãi đặc biệt cho căn hộ hướng sông này. Với thiết kế hiện đại và không gian xanh mát, đây chắc chắn là tổ ấm lý tưởng mà gia đình mình đang tìm kiếm.", "Ly (nữ miền Bắc)"],
     
     # Nữ Miền Bắc
     ["Dưới cơn mưa phùn lất phất của những ngày cuối đông, em khẽ nép vào vai anh, cảm nhận hơi ấm lan tỏa. Những khoảnh khắc bình dị như thế này khiến em nhận ra rằng, hạnh phúc đôi khi chỉ đơn giản là được ở bên nhau.", "Ngọc (nữ miền Bắc)"],
-    
-    # Nữ Miền Bắc
-    ["Ngày xửa ngày xưa, ở một ngôi làng nọ có cô Tấm xinh đẹp, nết na nhưng sớm mồ côi mẹ. Dù bị mẹ kế và Cám hãm hại đủ đường, Tấm vẫn giữ được tấm lòng lương thiện và cuối cùng tìm được hạnh phúc xứng đáng.", "Hương (nữ miền Bắc)"],
 ]
 
 with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS Studio") as demo:
@@ -241,7 +240,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS Studio") as demo:
                 with gr.TabItem("👤 Giọng có sẵn (Preset)", id="preset_mode"):
                     voice_select = gr.Dropdown(
                         choices=list(VOICE_SAMPLES.keys()),
-                        value="Vĩnh (nam miền Nam)",
+                        value="Tuyên (nam miền Bắc)",
                         label="Danh sách giọng",
                         interactive=True
                     )
