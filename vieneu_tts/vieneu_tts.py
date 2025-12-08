@@ -228,7 +228,7 @@ class VieNeuTTS:
                 max_length=self.max_context,
                 eos_token_id=speech_end_id,
                 do_sample=True,
-                temperature=0.6,
+                temperature=1.0,
                 top_k=50,
                 use_cache=True,
                 min_new_tokens=50,
