@@ -263,8 +263,7 @@ Then open `http://127.0.0.1:7860` to:
 `examples/infer_long_text.py` chunks long passages into ≤256-character segments (prefers sentence boundaries) and synthesizes them sequentially.
 
 ```bash
-python -m examples.infer_long_text.py \
-  --text-file examples/sample_long_text.txt \
+uv run -m examples.infer_long_text --text-file examples/sample_long_text.txt \
   --ref-audio sample/Vĩnh\ \(nam\ miền\ Nam\).wav \
   --ref-text sample/Vĩnh\ \(nam\ miền\ Nam\).txt \
   --output output_audio/sample_long_text.wav
@@ -385,6 +384,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
