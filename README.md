@@ -234,27 +234,6 @@ Each reference voice includes both a `.wav` audio file and a matching `.txt` tra
 
 ---
 
-## ✅ Best Practices & Limits
-
-- Keep each inference request ≤250 characters to stay within the 2 048-token context window (reference speech tokens also consume context).
-- Normalize both the target text and the reference transcript before inference (built-in scripts already do this).
-- Trim reference audio to ~3–5 seconds for faster processing and consistent quality.
-- For long articles, split by paragraph/sentence and stitch the outputs – use `examples/infer_long_text.py`.
-- Always obtain consent before cloning someone’s voice.
-
----
-
-## ⚠️ Troubleshooting
-
-| Issue | Likely cause | How to fix |
-|-------|--------------|------------|
-| `ValueError: Could not find libespeak...` | eSpeak NG is missing or the path is incorrect | Install eSpeak NG and set `PHONEMIZER_ESPEAK_LIBRARY` if required |
-| `401 Unauthorized` when downloading `facebook/w2v-bert-2.0` | Invalid or stale Hugging Face token in the environment | Run `huggingface-cli login --token …` or remove `HF_TOKEN` to use anonymous access |
-| `CUDA out of memory` | GPU VRAM is insufficient | Switch to CPU (`backbone_device="cpu"` & `codec_device="cpu"`) or use a quantized checkpoint |
-| `No valid speech tokens found` | Prompt too long, empty text, or poor reference clip | Shorten the input, double-check normalization, or pick another reference sample |
-
----
-
 ## 📚 References
 
 - [GitHub Repository](https://github.com/pnnbao97/VieNeu-TTS)  
@@ -324,6 +303,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
