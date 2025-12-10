@@ -14,54 +14,11 @@ Trained on ~1000 hours of high-quality Vietnamese speech, this model represents 
 - **Better voice cloning**: Higher fidelity and speaker consistency
 - **Real-time synthesis**: 24 kHz waveform generation on CPU or GPU
 
-Fine-tuned from **NeuTTS Air**, VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
+VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
 
 **Author:** Phạm Nguyễn Ngọc Bảo
-> 📢 Sắp ra mắt: Hỗ trợ GGUF cho CPU!
-> Chúng tôi đang gấp rút hoàn thiện phiên bản hỗ trợ GGUF để cho phép mô hình chạy hiệu quả trên CPU mà không cần GPU mạnh.
-> Phiên bản này dự kiến sẽ được ra mắt sớm, trong 1-2 tuần tới. Hãy theo dõi kho lưu trữ GitHub để nhận thông báo mới nhất!
 
----
-
-## ✨ Features
-
-- 🎙️ High-quality Vietnamese speech at 24 kHz
-- 🚀 Instant voice cloning using a short reference clip
-- 💻 Fully offline inference (no internet required)
-- 🎯 Multiple curated reference voices (Southern accent, male & female)
-- ⚡ Real-time or faster-than-real-time synthesis on CPU/GPU
-- 🖥️ Ready-to-use Python API, CLI scripts, and a Gradio UI
-
----
-
-## 💝 Support This Project
-
-**VieNeu-TTS** is a free, open-source project. However, training high-quality TTS models on **1000+ hours of speech data** requires significant computational resources.
-
-If you find this project useful, please consider supporting its development:
-
-<div align="center">
-
-[![Buy Me a Coffee](https://img.shields.io/badge/☕_Buy_Me_a_Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/pnnbao)
-
-</div>
-
-**Your support helps:**
-
-- 💰 **GPU Training Costs**: Training on 1000+ hours costs thousands of dollars in compute
-- 🚀 **New Features**: Emotion control, speaking styles, GGUF quantization
-- 📊 **Dataset Expansion**: Collecting more diverse Vietnamese voices (North, Central, South)
-- 🎯 **Quality Improvements**: Better pronunciation, naturalness, and voice cloning fidelity
-- 🌍 **Bilingual Support**: Vietnamese + English code-switching capabilities
-- 🔧 **Maintenance**: Bug fixes, updates, and community support
-
-<div align="center">
-
-*Every contribution, big or small, makes a real difference!*  
-*Thank you for supporting Vietnamese AI development!* 🇻🇳🙏
-
-</div>
-
+[<img width="600" height="595" alt="VieNeu-TTS" src="https://github.com/user-attachments/assets/6b32df9d-7e2e-474f-94c8-43d6fa586d15" />](https://github.com/user-attachments/assets/6b32df9d-7e2e-474f-94c8-43d6fa586d15)
 ---
 
 ## 🔬 Model Overview
@@ -245,7 +202,6 @@ uv run main.py
 This script runs several normalized sentences using the bundled sample voice and writes `output_*.wav` files under `output_audio/`.
 
 ### Gradio web demo
-[<img width="600" height="595" alt="VieNeu-TTS" src="https://github.com/user-attachments/assets/6b32df9d-7e2e-474f-94c8-43d6fa586d15" />](https://github.com/user-attachments/assets/6b32df9d-7e2e-474f-94c8-43d6fa586d15)
 
 ```bash
 uv run gradio_app.py
@@ -384,6 +340,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
