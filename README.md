@@ -19,6 +19,7 @@ VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
 **Author:** Phạm Nguyễn Ngọc Bảo
 
 [<img width="600" height="595" alt="VieNeu-TTS" src="https://github.com/user-attachments/assets/6b32df9d-7e2e-474f-94c8-43d6fa586d15" />](https://github.com/user-attachments/assets/6b32df9d-7e2e-474f-94c8-43d6fa586d15)
+
 ---
 
 ## 🔬 Model Overview
@@ -213,23 +214,6 @@ Then open `http://127.0.0.1:7860` to:
 - Upload your own reference audio + transcript
 - Enter up to 250 characters per request (recommended)
 - Preview or download the synthesized audio
-
-### Long-text helper
-
-`examples/infer_long_text.py` chunks long passages into ≤256-character segments (prefers sentence boundaries) and synthesizes them sequentially.
-
-```bash
-uv run -m examples.infer_long_text --text-file examples/sample_long_text.txt \
-  --ref-audio sample/Vĩnh\ \(nam\ miền\ Nam\).wav \
-  --ref-text sample/Vĩnh\ \(nam\ miền\ Nam\).txt \
-  --output output_audio/sample_long_text.wav
-```
-
-[🎵 Listen to sample (MP3)](https://github.com/user-attachments/files/23436562/longtext.mp3)
-
-Use `--text "raw paragraph here"` to infer without creating a file.
-
----
 
 ## 🔈 Reference Voices (`sample/`)
 
