@@ -1,0 +1,65 @@
+text_settings:
+  max_chars_per_chunk: 256
+  max_total_chars_streaming: 3000
+
+backbone_configs:
+  "SafeTensor (GPU)":
+    repo: pnnbao-ump/VieNeu-TTS
+    supports_streaming: false
+    description: Chất lượng cao nhất, yêu cầu GPU
+  "GGUF Q8":
+    repo: pnnbao-ump/VieNeu-TTS-q8-gguf
+    supports_streaming: true
+    description: Cân bằng giữa chất lượng và tốc độ
+  "GGUF Q4":
+    repo: pnnbao-ump/VieNeu-TTS-q4-gguf
+    supports_streaming: true
+    description: Nhẹ nhất, phù hợp CPU
+
+codec_configs:
+  "NeuCodec (Standard)":
+    repo: neuphonic/neucodec
+    description: Codec chuẩn, tốc độ trung bình
+    use_preencoded: false
+  "NeuCodec ONNX (Fast CPU)":
+    repo: neuphonic/neucodec-onnx-decoder
+    description: Tối ưu cho CPU, cần pre-encoded codes
+    use_preencoded: true
+
+voice_samples:
+  "Tuyên (nam miền Bắc)":
+    audio: ./sample/Tuyên (nam miền Bắc).wav
+    text: ./sample/Tuyên (nam miền Bắc).txt
+    codes: ./sample/Tuyên (nam miền Bắc).pt
+  "Vĩnh (nam miền Nam)":
+    audio: ./sample/Vĩnh (nam miền Nam).wav
+    text: ./sample/Vĩnh (nam miền Nam).txt
+    codes: ./sample/Vĩnh (nam miền Nam).pt
+  "Bình (nam miền Bắc)":
+    audio: ./sample/Bình (nam miền Bắc).wav
+    text: ./sample/Bình (nam miền Bắc).txt
+    codes: ./sample/Bình (nam miền Bắc).pt
+  "Nguyên (nam miền Nam)":
+    audio: ./sample/Nguyên (nam miền Nam).wav
+    text: ./sample/Nguyên (nam miền Nam).txt
+    codes: ./sample/Nguyên (nam miền Nam).pt
+  "Sơn (nam miền Nam)":
+    audio: ./sample/Sơn (nam miền Nam).wav
+    text: ./sample/Sơn (nam miền Nam).txt
+    codes: ./sample/Sơn (nam miền Nam).pt
+  "Đoan (nữ miền Nam)":
+    audio: ./sample/Đoan (nữ miền Nam).wav
+    text: ./sample/Đoan (nữ miền Nam).txt
+    codes: ./sample/Đoan (nữ miền Nam).pt
+  "Ngọc (nữ miền Bắc)":
+    audio: ./sample/Ngọc (nữ miền Bắc).wav
+    text: ./sample/Ngọc (nữ miền Bắc).txt
+    codes: ./sample/Ngọc (nữ miền Bắc).pt
+  "Ly (nữ miền Bắc)":
+    audio: ./sample/Ly (nữ miền Bắc).wav
+    text: ./sample/Ly (nữ miền Bắc).txt
+    codes: ./sample/Ly (nữ miền Bắc).pt
+  "Dung (nữ miền Nam)":
+    audio: ./sample/Dung (nữ miền Nam).wav
+    text: ./sample/Dung (nữ miền Nam).txt
+    codes: ./sample/Dung (nữ miền Nam).pt

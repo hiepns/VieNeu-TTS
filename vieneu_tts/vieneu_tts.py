@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from neucodec import NeuCodec, DistillNeuCodec
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from utils.phonemize_text import phonemize_text, phonemize_with_dict
+from utils.phonemize_text import phonemize_with_dict
 import re
 
 def _linear_overlap_add(frames: list[np.ndarray], stride: int) -> np.ndarray:
@@ -110,7 +110,7 @@ class VieNeuTTS:
                 except ImportError as e:
                     raise ImportError(
                         "Failed to import the onnx decoder."
-                        " Ensure you have onnxruntime installed as well as neucodec >= 0.0.4."
+                        "Ensure you have onnxruntime installed as well as neucodec >= 0.0.4."
                     ) from e
                 self.codec = NeuCodecOnnxDecoder.from_pretrained(codec_repo)
                 self._is_onnx_codec = True
@@ -276,7 +276,7 @@ class VieNeuTTS:
         for item in self.backbone(
             prompt,
             max_tokens=self.max_context,
-            temperature=0.2,
+            temperature=1.0,
             top_k=50,
             stop=["<|SPEECH_GENERATION_END|>"],
             stream=True

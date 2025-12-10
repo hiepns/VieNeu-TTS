@@ -3,7 +3,7 @@ import soundfile as sf
 import torch
 import os
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+device = "cpu"
 
 input_texts = [
     "Các khóa học trực tuyến đang giúp học sinh tiếp cận kiến thức mọi lúc mọi nơi. Giáo viên sử dụng video, bài tập tương tác và thảo luận trực tuyến để nâng cao hiệu quả học tập.",
@@ -18,7 +18,7 @@ input_texts = [
 output_dir = "./output_audio"
 os.makedirs(output_dir, exist_ok=True)
 
-def main(backbone="pnnbao-ump/VieNeu-TTS", codec="neuphonic/neucodec"):
+def main(backbone="pnnbao-ump/VieNeu-TTS-q4-gguf", codec="neuphonic/neucodec-onnx-decoder"):
     """
     In the sample directory, there are wav files and txt files with matching names.
     These are pre-prepared reference files for testing with Vietnamese names:
@@ -41,6 +41,7 @@ def main(backbone="pnnbao-ump/VieNeu-TTS", codec="neuphonic/neucodec"):
     # Male voice (South accent)
     ref_audio_path = "./sample/Vĩnh (nam miền Nam).wav"
     ref_text_path = "./sample/Vĩnh (nam miền Nam).txt"
+    ref_codes_path = "./sample/Vĩnh (nam miền Nam).pt"
     
     # Female voice (South accent) - uncomment to use
     # ref_audio_path = "./sample/Đoan (nữ miền Nam).wav"
@@ -60,8 +61,12 @@ def main(backbone="pnnbao-ump/VieNeu-TTS", codec="neuphonic/neucodec"):
         codec_device=device
     )
 
-    print("Encoding reference audio...")
-    ref_codes = tts.encode_reference(ref_audio_path)
+    if codec == "neuphonic/neucodec-onnx-decoder":
+        print("Load reference codes...")
+        ref_codes = torch.load(ref_codes_path, map_location=device)
+    else:
+        print("Encoding reference audio...")
+        ref_codes = tts.encode_reference(ref_audio_path)
 
     # Generate speech for all input texts
     for i, text in enumerate(input_texts, 1):

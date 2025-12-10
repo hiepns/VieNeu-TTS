@@ -5,47 +5,126 @@ import torch
 from vieneu_tts import VieNeuTTS
 import os
 import time
+import numpy as np
+import re
+from typing import Generator
+import queue
+import threading
+import yaml
+from utils.core_utils import split_text_into_chunks
 
 print("⏳ Đang khởi động VieNeu-TTS...")
 
-# --- 1. SETUP MODEL ---
-print("📦 Đang tải model...")
-device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"🖥️ Sử dụng thiết bị: {device.upper()}")
-
+# --- CONSTANTS & CONFIG ---
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.yaml")
 try:
-    tts = VieNeuTTS(
-        backbone_repo="pnnbao-ump/VieNeu-TTS",
-        backbone_device=device,
-        codec_repo="neuphonic/neucodec",
-        codec_device=device
-    )
-    print("✅ Model đã tải xong!")
+    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+        _config = yaml.safe_load(f) or {}
 except Exception as e:
-    print(f"⚠️ Không thể tải model (Chế độ UI Demo): {e}")
-    class MockTTS:
-        def encode_reference(self, path): return None
-        def infer(self, text, ref, ref_text): 
-            import numpy as np
-            # Giả lập độ trễ để test tính năng đo thời gian
-            time.sleep(1.5) 
-            return np.random.uniform(-0.5, 0.5, 24000*3)
-    tts = MockTTS()
+    raise RuntimeError(f"Không thể đọc config.yaml: {e}")
 
-# --- 2. DATA ---
-VOICE_SAMPLES = {
-    "Tuyên (nam miền Bắc)": {"audio": "./sample/Tuyên (nam miền Bắc).wav", "text": "./sample/Tuyên (nam miền Bắc).txt"},
-    "Vĩnh (nam miền Nam)": {"audio": "./sample/Vĩnh (nam miền Nam).wav", "text": "./sample/Vĩnh (nam miền Nam).txt"},
-    "Bình (nam miền Bắc)": {"audio": "./sample/Bình (nam miền Bắc).wav", "text": "./sample/Bình (nam miền Bắc).txt"},
-    "Nguyên (nam miền Nam)": {"audio": "./sample/Nguyên (nam miền Nam).wav", "text": "./sample/Nguyên (nam miền Nam).txt"},
-    "Sơn (nam miền Nam)": {"audio": "./sample/Sơn (nam miền Nam).wav", "text": "./sample/Sơn (nam miền Nam).txt"},
-    "Đoan (nữ miền Nam)": {"audio": "./sample/Đoan (nữ miền Nam).wav", "text": "./sample/Đoan (nữ miền Nam).txt"},
-    "Ngọc (nữ miền Bắc)": {"audio": "./sample/Ngọc (nữ miền Bắc).wav", "text": "./sample/Ngọc (nữ miền Bắc).txt"},
-    "Ly (nữ miền Bắc)": {"audio": "./sample/Ly (nữ miền Bắc).wav", "text": "./sample/Ly (nữ miền Bắc).txt"},
-    "Dung (nữ miền Nam)": {"audio": "./sample/Dung (nữ miền Nam).wav", "text": "./sample/Dung (nữ miền Nam).txt"}
-}
+BACKBONE_CONFIGS = _config.get("backbone_configs", {})
+CODEC_CONFIGS = _config.get("codec_configs", {})
+VOICE_SAMPLES = _config.get("voice_samples", {})
+_text_settings = _config.get("text_settings", {})
+MAX_CHARS_PER_CHUNK = _text_settings.get("max_chars_per_chunk", 256)
+MAX_TOTAL_CHARS_STREAMING = _text_settings.get("max_total_chars_streaming", 3000)
 
-# --- 3. HELPER FUNCTIONS ---
+if not BACKBONE_CONFIGS or not CODEC_CONFIGS:
+    raise ValueError("config.yaml thiếu backbone_configs hoặc codec_configs")
+if not VOICE_SAMPLES:
+    raise ValueError("config.yaml thiếu voice_samples")
+
+# --- 1. MODEL CONFIGURATION ---
+
+# Global model instance
+tts = None
+current_backbone = None
+current_codec = None
+
+def load_model(backbone_choice, codec_choice, device_choice):
+    """Load model with specified configuration"""
+    global tts, current_backbone, current_codec
+    
+    try:
+        backbone_config = BACKBONE_CONFIGS[backbone_choice]
+        codec_config = CODEC_CONFIGS[codec_choice]
+        
+        # Determine devices
+        if device_choice == "Auto":
+            if "GGUF" in backbone_choice:
+                backbone_device = "gpu" if torch.cuda.is_available() else "cpu"
+            else:
+                backbone_device = "cuda" if torch.cuda.is_available() else "cpu"
+            
+            if "ONNX" in codec_choice:
+                codec_device = "cpu"
+            else:
+                codec_device = "cuda" if torch.cuda.is_available() else "cpu"
+        else:
+            backbone_device = device_choice.lower()
+            codec_device = device_choice.lower()
+            
+            if "ONNX" in codec_choice:
+                codec_device = "cpu"
+        
+        if "GGUF" in backbone_choice and backbone_device == "cuda":
+            backbone_device = "gpu"
+        
+        print(f"📦 Đang tải model...")
+        print(f"   Backbone: {backbone_config['repo']} on {backbone_device}")
+        print(f"   Codec: {codec_config['repo']} on {codec_device}")
+        
+        tts = VieNeuTTS(
+            backbone_repo=backbone_config["repo"],
+            backbone_device=backbone_device,
+            codec_repo=codec_config["repo"],
+            codec_device=codec_device
+        )
+        
+        current_backbone = backbone_choice
+        current_codec = codec_choice
+        
+        streaming_support = "✅ Có" if backbone_config['supports_streaming'] else "❌ Không"
+        preencoded_note = "\n⚠️ Codec này cần sử dụng pre-encoded codes (.pt files)" if codec_config['use_preencoded'] else ""
+        
+        return (
+            f"✅ Model đã tải thành công!\n\n"
+            f"🦜 Model Device: {backbone_device.upper()}\n\n"
+            f"🎵 Codec Device: {codec_device.upper()}{preencoded_note}"
+        )
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"❌ Lỗi khi tải model: {str(e)}"
+
+# --- 2. DATA & HELPERS ---
+
+GGUF_ALLOWED_VOICES = [
+    "Vĩnh (nam miền Nam)",
+    "Bình (nam miền Bắc)",
+    "Ngọc (nữ miền Bắc)",
+    "Dung (nữ miền Nam)",
+]
+
+
+def get_voice_options(backbone_choice: str):
+    """Filter voice options: GGUF only shows the 4 allowed voices."""
+    if "GGUF" in backbone_choice:
+        return [v for v in GGUF_ALLOWED_VOICES if v in VOICE_SAMPLES]
+    return list(VOICE_SAMPLES.keys())
+
+
+def update_voice_dropdown(backbone_choice: str, current_voice: str):
+    options = get_voice_options(backbone_choice)
+    new_value = current_voice if current_voice in options else (options[0] if options else None)
+    # gr.update is available across Gradio versions to update component props
+    return gr.update(choices=options, value=new_value)
+
+
+# --- 3. CORE LOGIC FUNCTIONS ---
+
 def load_reference_info(voice_choice):
     if voice_choice in VOICE_SAMPLES:
         audio_path = VOICE_SAMPLES[voice_choice]["audio"]
@@ -61,58 +140,211 @@ def load_reference_info(voice_choice):
             return None, f"❌ Lỗi: {str(e)}"
     return None, ""
 
-def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab):
+def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, generation_mode):
+    """Cải tiến streaming với pre-buffering và crossfade mượt hơn"""
+    global tts, current_backbone, current_codec
+    
+    # === VALIDATION (giữ nguyên) ===
+    if tts is None:
+        yield None, "⚠️ Vui lòng tải model trước!"
+        return
+    if not text or text.strip() == "":
+        yield None, "⚠️ Vui lòng nhập văn bản!"
+        return
+
+    raw_text = text.strip()
+    codec_config = CODEC_CONFIGS[current_codec]
+    use_preencoded = codec_config['use_preencoded']
+
+    # Setup Reference (giữ nguyên logic cũ)
+    if mode_tab == "custom_mode": 
+        if custom_audio is None or not custom_text:
+            yield None, "⚠️ Thiếu Audio hoặc Text mẫu custom."
+            return
+        ref_audio_path = custom_audio
+        ref_text_raw = custom_text
+        ref_codes_path = None
+    else:
+        if voice_choice not in VOICE_SAMPLES:
+            yield None, "⚠️ Vui lòng chọn giọng mẫu."
+            return
+        ref_audio_path = VOICE_SAMPLES[voice_choice]["audio"]
+        ref_text_path = VOICE_SAMPLES[voice_choice]["text"]
+        ref_codes_path = VOICE_SAMPLES[voice_choice]["codes"]
+        if not os.path.exists(ref_audio_path):
+            yield None, "❌ Không tìm thấy file audio mẫu."
+            return
+        with open(ref_text_path, "r", encoding="utf-8") as f:
+            ref_text_raw = f.read()
+
+    yield None, "📄 Đang xử lý Reference..."
+    
+    # Encode reference
     try:
-        if not text or text.strip() == "":
-            return None, "⚠️ Vui lòng nhập văn bản cần tổng hợp!"
-        
-        # --- LOGIC CHECK LIMIT 250 ---
-        if len(text) > 250:
-            return None, f"❌ Văn bản quá dài ({len(text)}/250 ký tự)! Vui lòng cắt ngắn lại để đảm bảo chất lượng."
-
-        # Logic chọn Reference
-        if mode_tab == "custom_mode": 
-            if custom_audio is None or not custom_text:
-                return None, "⚠️ Vui lòng tải lên Audio và nhập nội dung Audio đó."
-            ref_audio_path = custom_audio
-            ref_text_raw = custom_text
-            print("🎨 Mode: Custom Voice")
-        else: # Preset
-            if voice_choice not in VOICE_SAMPLES:
-                 return None, "⚠️ Vui lòng chọn một giọng mẫu."
-            ref_audio_path = VOICE_SAMPLES[voice_choice]["audio"]
-            ref_text_path = VOICE_SAMPLES[voice_choice]["text"]
-            
-            if not os.path.exists(ref_audio_path):
-                 return None, f"❌ Không tìm thấy file audio: {ref_audio_path}"
-                 
-            with open(ref_text_path, "r", encoding="utf-8") as f:
-                ref_text_raw = f.read()
-            print(f"🎤 Mode: Preset Voice ({voice_choice})")
-
-        # Inference & Đo thời gian
-        print(f"📝 Text: {text[:50]}...")
-        
-        start_time = time.time() # <--- Bắt đầu bấm giờ
-        
-        ref_codes = tts.encode_reference(ref_audio_path)
-        wav = tts.infer(text, ref_codes, ref_text_raw)
-        
-        end_time = time.time()   # <--- Kết thúc bấm giờ
-        process_time = end_time - start_time # <--- Tính thời gian xử lý
-        
-        # Save
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
-            sf.write(tmp_file.name, wav, 24000)
-            output_path = tmp_file.name
-        
-        # <--- Cập nhật thông báo kết quả
-        return output_path, f"✅ Thành công! (Mất {process_time:.2f} giây để tạo)"
-
+        if use_preencoded and ref_codes_path and os.path.exists(ref_codes_path):
+            ref_codes = torch.load(ref_codes_path, map_location="cpu")
+        else:
+            ref_codes = tts.encode_reference(ref_audio_path)
+        if isinstance(ref_codes, torch.Tensor):
+            ref_codes = ref_codes.cpu().numpy()
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return None, f"❌ Lỗi hệ thống: {str(e)}"
+        yield None, f"❌ Lỗi xử lý reference: {e}"
+        return
+
+    text_chunks = split_text_into_chunks(raw_text, max_chars=MAX_CHARS_PER_CHUNK)
+    total_chunks = len(text_chunks)
+
+    # === STANDARD MODE ===
+    if generation_mode == "Standard (Một lần)":
+        yield None, f"🚀 Bắt đầu tổng hợp chế độ Standard ({total_chunks} đoạn)..."
+        all_audio_segments = []
+        sr = 24000
+        silence_pad = np.zeros(int(sr * 0.15), dtype=np.float32)
+        start_time = time.time()
+        
+        try:
+            for i, chunk in enumerate(text_chunks):
+                yield None, f"⏳ Đang xử lý đoạn {i+1}/{total_chunks}..."
+                chunk_wav = tts.infer(chunk, ref_codes, ref_text_raw)
+                if chunk_wav is not None and len(chunk_wav) > 0:
+                    all_audio_segments.append(chunk_wav)
+                    if i < total_chunks - 1:
+                        all_audio_segments.append(silence_pad)
+            
+            if not all_audio_segments:
+                yield None, "❌ Không sinh được audio nào."
+                return
+
+            yield None, "💾 Đang ghép file và lưu..."
+            final_wav = np.concatenate(all_audio_segments)
+            
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+                sf.write(tmp.name, final_wav, sr)
+                output_path = tmp.name
+            
+            process_time = time.time() - start_time
+            yield output_path, f"✅ Hoàn tất! (Tổng thời gian: {process_time:.2f}s)"
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            yield None, f"❌ Lỗi Standard Mode: {str(e)}"
+        return
+
+    # === STREAMING MODE ===
+    else:
+        sr = 24000
+        crossfade_samples = int(sr * 0.03)
+        
+        # CẢI TIẾN 1: Tăng buffer size và thêm pre-buffering
+        audio_queue = queue.Queue(maxsize=100)
+        PRE_BUFFER_SIZE = 3  # Chờ 3 chunks trước khi bắt đầu phát
+        
+        end_event = threading.Event()
+        error_event = threading.Event()
+        error_msg = ""
+
+        def producer_thread():
+            nonlocal error_msg
+            try:
+                previous_tail = None
+                chunk_count = 0
+                
+                for i, chunk_text in enumerate(text_chunks):
+                    stream_gen = tts.infer_stream(chunk_text, ref_codes, ref_text_raw)
+                    
+                    for part_idx, audio_part in enumerate(stream_gen):
+                        if audio_part is None or len(audio_part) == 0:
+                            continue
+                        
+                        if previous_tail is not None and len(previous_tail) > 0:
+                            overlap = min(len(previous_tail), len(audio_part), crossfade_samples)
+                            if overlap > 0:
+                                fade_out = np.linspace(1.0, 0.0, overlap, dtype=np.float32)
+                                fade_in = np.linspace(0.0, 1.0, overlap, dtype=np.float32)
+                                
+                                # Kết hợp phần overlap
+                                blended = (audio_part[:overlap] * fade_in + 
+                                          previous_tail[-overlap:] * fade_out)
+                                
+                                processed = np.concatenate([
+                                    previous_tail[:-overlap] if len(previous_tail) > overlap else np.array([]),
+                                    blended,
+                                    audio_part[overlap:]
+                                ])
+                            else:
+                                processed = np.concatenate([previous_tail, audio_part])
+                            
+                            tail_size = min(crossfade_samples, len(processed))
+                            previous_tail = processed[-tail_size:].copy()
+                            output_chunk = processed[:-tail_size] if len(processed) > tail_size else processed
+                        else:
+                            tail_size = min(crossfade_samples, len(audio_part))
+                            previous_tail = audio_part[-tail_size:].copy()
+                            output_chunk = audio_part[:-tail_size] if len(audio_part) > tail_size else audio_part
+                        
+                        if len(output_chunk) > 0:
+                            audio_queue.put((sr, output_chunk))
+                            chunk_count += 1
+                
+                if previous_tail is not None and len(previous_tail) > 0:
+                    audio_queue.put((sr, previous_tail))
+                    
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                error_msg = str(e)
+                error_event.set()
+            finally:
+                end_event.set()
+                audio_queue.put(None)
+
+        threading.Thread(target=producer_thread, daemon=True).start()
+        
+        yield (sr, np.zeros(int(sr * 0.05))), "🔄 Đang buffering..."
+        
+        pre_buffer = []
+        while len(pre_buffer) < PRE_BUFFER_SIZE:
+            try:
+                item = audio_queue.get(timeout=5.0)
+                if item is None:
+                    break
+                pre_buffer.append(item)
+            except queue.Empty:
+                if error_event.is_set():
+                    yield None, f"❌ Lỗi: {error_msg}"
+                    return
+                break
+        
+        # Bắt đầu phát pre-buffer
+        full_audio_buffer = []
+        for sr, audio_data in pre_buffer:
+            full_audio_buffer.append(audio_data)
+            yield (sr, audio_data), "🔊 Đang phát..."
+        
+        # Tiếp tục phát phần còn lại
+        while True:
+            try:
+                item = audio_queue.get(timeout=0.05)
+                if item is None:
+                    break
+                sr, audio_data = item
+                full_audio_buffer.append(audio_data)
+                yield (sr, audio_data), "🔊 Đang phát..."
+            except queue.Empty:
+                if error_event.is_set():
+                    yield None, f"❌ Lỗi: {error_msg}"
+                    break
+                if end_event.is_set() and audio_queue.empty():
+                    break
+                continue
+
+        # Lưu file hoàn chỉnh
+        if full_audio_buffer:
+            final_wav = np.concatenate(full_audio_buffer)
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+                sf.write(tmp.name, final_wav, sr)
+            yield tmp.name, "✅ Hoàn tất Streaming!"
 
 # --- 4. UI SETUP ---
 theme = gr.themes.Ocean(
@@ -123,192 +355,89 @@ theme = gr.themes.Ocean(
 ).set(
     button_primary_background_fill="linear-gradient(90deg, #6366f1 0%, #0ea5e9 100%)",
     button_primary_background_fill_hover="linear-gradient(90deg, #4f46e5 0%, #0284c7 100%)",
-    block_shadow="0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
 )
 
-# <--- CSS ĐÃ SỬA (Background xanh đen + Chữ sáng)
 css = """
-.container { max-width: 1200px; margin: auto; }
-.header-box { 
-    text-align: center; 
-    margin-bottom: 25px; 
-    padding: 25px; 
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); /* Xanh đen (Slate 900 -> 800) */
-    border-radius: 12px; 
-    border: 1px solid #334155; 
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-}
-.header-title { 
-    font-size: 2.5rem; 
-    font-weight: 800; 
-    color: white; /* Chữ trắng */
-    background: -webkit-linear-gradient(45deg, #60A5FA, #22D3EE); /* Gradient xanh sáng cho chữ nổi bật */
-    -webkit-background-clip: text; 
-    -webkit-text-fill-color: transparent; 
-    margin-bottom: 10px; 
-}
-.header-desc {
-    font-size: 1.1rem; 
-    color: #cbd5e1; /* Màu xám sáng (Slate-300) */
-    margin-bottom: 15px;
-}
-.link-group a { 
-    text-decoration: none; 
-    margin: 0 10px; 
-    font-weight: 600; 
-    color: #94a3b8; /* Màu link sáng hơn chút */
-    transition: color 0.2s; 
-}
-.link-group a:hover { color: #38bdf8; text-shadow: 0 0 5px rgba(56, 189, 248, 0.5); }
-
+.container { max-width: 1400px; margin: auto; }
+.header-box { text-align: center; margin-bottom: 25px; padding: 25px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; color: white; }
+.header-title { font-size: 2.5rem; font-weight: 800; background: -webkit-linear-gradient(45deg, #60A5FA, #22D3EE); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 .status-box { font-weight: bold; text-align: center; border: none; background: transparent; }
-.warning-note { 
-    background-color: #fff7ed; 
-    border-left: 4px solid #f97316; 
-    padding: 12px; 
-    color: #9a3412; 
-    font-size: 0.9rem; 
-    border-radius: 4px;
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
 """
 
 EXAMPLES_LIST = [
-    # Nam Miền Nam
-    ["Về miền Tây không chỉ để ngắm nhìn sông nước hữu tình, mà còn để cảm nhận tấm chân tình của người dân nơi đây. Cùng ngồi xuồng ba lá len lỏi qua rặng dừa nước, nghe câu vọng cổ ngọt ngào thì còn gì bằng.", "Vĩnh (nam miền Nam)"],
-    
-    # Nam Miền Bắc
-    ["Hà Nội những ngày vào thu mang một vẻ đẹp trầm mặc và cổ kính đến lạ thường. Đi dạo quanh Hồ Gươm vào sáng sớm, hít hà mùi hoa sữa nồng nàn và thưởng thức chút cốm làng Vòng là trải nghiệm khó quên.", "Bình (nam miền Bắc)"],
-    
-    # Nam Miền Bắc
-    ["Sự bùng nổ của trí tuệ nhân tạo đang định hình lại cách chúng ta làm việc và sinh sống. Từ xe tự lái đến trợ lý ảo thông minh, công nghệ đang dần xóa nhòa ranh giới giữa thực tại và những bộ phim viễn tưởng.", "Tuyên (nam miền Bắc)"],
-    
-    # Nam Miền Nam
-    ["Sài Gòn hối hả là thế, nhưng chỉ cần tấp vào một quán cà phê ven đường, gọi ly bạc xỉu đá và ngắm nhìn dòng người qua lại, bạn sẽ thấy thành phố này cũng có những khoảng lặng thật bình yên và đáng yêu.", "Nguyên (nam miền Nam)"],
-    
-    # Nam Miền Nam
-    ["Để đảm bảo tiến độ dự án quan trọng này, chúng ta cần tập trung tối đa nguồn lực và phối hợp chặt chẽ giữa các phòng ban. Mọi khó khăn phát sinh cần được báo cáo ngay lập tức để ban lãnh đạo xử lý kịp thời.", "Sơn (nam miền Nam)"],
-
-    # Nữ Miền Nam
-    ["Ngày xửa ngày xưa, ở một ngôi làng nọ có cô Tấm xinh đẹp, nết na nhưng sớm mồ côi mẹ. Dù bị mẹ kế và Cám hãm hại đủ đường, Tấm vẫn giữ được tấm lòng lương thiện và cuối cùng tìm được hạnh phúc xứng đáng.", "Đoan (nữ miền Nam)"],
-    
-    # Nữ Miền Bắc
-    ["Dạ em chào anh chị, hiện tại bên em đang có chương trình ưu đãi đặc biệt cho căn hộ hướng sông này. Với thiết kế hiện đại và không gian xanh mát, đây chắc chắn là tổ ấm lý tưởng mà gia đình mình đang tìm kiếm.", "Ly (nữ miền Bắc)"],
-    
-    # Nữ Miền Bắc
-    ["Dưới cơn mưa phùn lất phất của những ngày cuối đông, em khẽ nép vào vai anh, cảm nhận hơi ấm lan tỏa. Những khoảnh khắc bình dị như thế này khiến em nhận ra rằng, hạnh phúc đôi khi chỉ đơn giản là được ở bên nhau.", "Ngọc (nữ miền Bắc)"],
+    ["Về miền Tây không chỉ để ngắm nhìn sông nước hữu tình, mà còn để cảm nhận tấm chân tình của người dân nơi đây.", "Vĩnh (nam miền Nam)"],
+    ["Hà Nội những ngày vào thu mang một vẻ đẹp trầm mặc và cổ kính đến lạ thường.", "Bình (nam miền Bắc)"],
 ]
 
-with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS Studio") as demo:
+with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
     
     with gr.Column(elem_classes="container"):
-        # Header - Cập nhật class cho HTML
-        gr.HTML("""
-            <div class="header-box">
-                <div class="header-title">🎙️ VieNeu-TTS Studio</div>
-                <div class="header-desc">
-                    Phiên bản: VieNeu-TTS-1000h (model mới nhất, train trên 1000 giờ dữ liệu)
-                </div>
-                <div class="link-group">
-                    <a href="https://huggingface.co/pnnbao-ump/VieNeu-TTS" target="_blank">🤗 Model Card</a> • 
-                    <a href="https://huggingface.co/datasets/pnnbao-ump/VieNeu-TTS-1000h" target="_blank">📖 Dataset 1000h</a> • 
-                    <a href="https://github.com/pnnbao97/VieNeu-TTS" target="_blank">🦜 GitHub</a>
-                </div>
-            </div>
-        """)
-    
-    with gr.Row(elem_classes="container", equal_height=False):
+        gr.HTML("""<div class="header-box"><div class="header-title">🦜 VieNeu-TTS Studio</div></div>""")
         
-        # --- LEFT: INPUT ---
-        with gr.Column(scale=3, variant="panel"):
-            gr.Markdown("### 📝 Văn bản đầu vào")
+        # --- CONFIGURATION ---
+        with gr.Group():
+            with gr.Row():
+                backbone_select = gr.Dropdown(list(BACKBONE_CONFIGS.keys()), value="GGUF Q8", label="🦜 Backbone")
+                codec_select = gr.Dropdown(list(CODEC_CONFIGS.keys()), value="NeuCodec (Standard)", label="🎵 Codec")
+                device_choice = gr.Radio(["Auto", "CPU", "CUDA"], value="Auto", label="🖥️ Device")
+            
+            with gr.Row():
+                btn_load = gr.Button("🔄 Tải Model", variant="primary")
+            model_status = gr.Markdown("⏳ Chưa tải model.")
+    
+    with gr.Row(elem_classes="container"):
+        # --- INPUT ---
+        with gr.Column(scale=3):
             text_input = gr.Textbox(
-                label="Nhập văn bản",
-                placeholder="Nhập nội dung tiếng Việt cần chuyển thành giọng nói...",
-                lines=4,
-                value="Sự bùng nổ của trí tuệ nhân tạo đang định hình lại cách chúng ta làm việc và sinh sống. Từ xe tự lái đến trợ lý ảo thông minh, công nghệ đang dần xóa nhòa ranh giới giữa thực tại và những bộ phim viễn tưởng.",
-                show_label=False
+                label=f"Văn bản (Streaming hỗ trợ tới {MAX_TOTAL_CHARS_STREAMING} ký tự, chia chunk {MAX_CHARS_PER_CHUNK} ký tự)", 
+                lines=4, 
+                value="Hà Nội, trái tim của Việt Nam, là một thành phố ngàn năm văn hiến với bề dày lịch sử và văn hóa độc đáo. Bước chân trên những con phố cổ kính quanh Hồ Hoàn Kiếm, du khách như được du hành ngược thời gian, chiêm ngưỡng kiến trúc Pháp cổ điển hòa quyện với nét kiến trúc truyền thống Việt Nam. Mỗi con phố trong khu phố cổ mang một tên gọi đặc trưng, phản ánh nghề thủ công truyền thống từng thịnh hành nơi đây như phố Hàng Bạc, Hàng Đào, Hàng Mã. Ẩm thực Hà Nội cũng là một điểm nhấn đặc biệt, từ tô phở nóng hổi buổi sáng, bún chả thơm lừng trưa hè, đến chè Thái ngọt ngào chiều thu. Những món ăn dân dã này đã trở thành biểu tượng của văn hóa ẩm thực Việt, được cả thế giới yêu mến. Người Hà Nội nổi tiếng với tính cách hiền hòa, lịch thiệp nhưng cũng rất cầu toàn trong từng chi tiết nhỏ, từ cách pha trà sen cho đến cách chọn hoa sen tây để thưởng trà.",
             )
             
-            # Counter + Warning
-            with gr.Row():
-                char_count = gr.HTML("<div style='text-align: right; color: #64748B; font-size: 0.8rem;'>0 / 250 ký tự</div>")
-            
-            gr.Markdown("### 🗣️ Chọn giọng đọc")
             with gr.Tabs() as tabs:
-                with gr.TabItem("👤 Giọng có sẵn (Preset)", id="preset_mode"):
-                    voice_select = gr.Dropdown(
-                        choices=list(VOICE_SAMPLES.keys()),
-                        value="Tuyên (nam miền Bắc)",
-                        label="Danh sách giọng",
-                        interactive=True
-                    )
-                    with gr.Accordion("Thông tin giọng mẫu", open=False):
-                        ref_audio_preview = gr.Audio(label="Audio mẫu", interactive=False, type="filepath")
-                        ref_text_preview = gr.Markdown("...")
+                with gr.TabItem("👤 Preset", id="preset_mode"):
+                    initial_voices = get_voice_options("GGUF Q8")
+                    default_voice = initial_voices[0] if initial_voices else None
+                    voice_select = gr.Dropdown(initial_voices, value=default_voice, label="Giọng mẫu")
+                with gr.TabItem("🎙️ Custom", id="custom_mode"):
+                    custom_audio = gr.Audio(label="File mẫu (.wav)", type="filepath")
+                    custom_text = gr.Textbox(label="Lời thoại mẫu")
 
-                with gr.TabItem("🎙️ Giọng tùy chỉnh (Custom)", id="custom_mode"):
-                    gr.Markdown("Tải lên giọng của bạn (Zero-shot Cloning)")
-                    custom_audio = gr.Audio(label="File ghi âm (.wav)", type="filepath")
-                    custom_text = gr.Textbox(label="Nội dung ghi âm", placeholder="Nhập chính xác lời thoại...")
-
+            generation_mode = gr.Radio(
+                ["Standard (Một lần)", "Streaming (Từng đoạn)"], 
+                value="Streaming (Từng đoạn)", 
+                label="Chế độ sinh"
+            )
             current_mode = gr.Textbox(visible=False, value="preset_mode")
-            btn_generate = gr.Button("Tổng hợp giọng nói", variant="primary", size="lg")
+            btn_generate = gr.Button("🎵 Bắt đầu", variant="primary", size="lg")
 
-        # --- RIGHT: OUTPUT ---
+        # --- OUTPUT ---
         with gr.Column(scale=2):
-            gr.Markdown("### 🎧 Kết quả")
-            with gr.Group():
-                audio_output = gr.Audio(label="Audio đầu ra", type="filepath", show_download_button=True, autoplay=True)
-                status_output = gr.Textbox(label="Trạng thái", show_label=False, elem_classes="status-box", placeholder="Sẵn sàng...")
+            audio_output = gr.Audio(
+                label="Kết quả", 
+                type="filepath", 
+                autoplay=True,
+                show_download_button=True
+            )
+            status_output = gr.Textbox(label="Trạng thái", elem_classes="status-box")
 
-    # --- EXAMPLES ---
-    with gr.Row(elem_classes="container"):
-        with gr.Column():
-            gr.Markdown("### 📚 Ví dụ mẫu")
-            gr.Examples(examples=EXAMPLES_LIST, inputs=[text_input, voice_select], label="Thử nghiệm nhanh")
-
-    # --- LOGIC ---
-    def update_count(text):
-        l = len(text)
-        if l > 250:
-            color = "#dc2626" # Red
-            msg = f"⚠️ <b>{l} / 250</b> - Quá giới hạn!"
-        elif l > 200:
-            color = "#ea580c" # Orange
-            msg = f"{l} / 250"
-        else:
-            color = "#64748B" # Gray
-            msg = f"{l} / 250 ký tự"
-        return f"<div style='text-align: right; color: {color}; font-size: 0.8rem; font-weight: bold'>{msg}</div>"
-
-    text_input.change(update_count, text_input, char_count)
-
-    def update_ref_preview(voice):
-        audio, text = load_reference_info(voice)
-        return audio, f"> *\"{text}\"*"
+    # --- EVENT HANDLERS ---
     
-    voice_select.change(update_ref_preview, voice_select, [ref_audio_preview, ref_text_preview])
-    demo.load(update_ref_preview, voice_select, [ref_audio_preview, ref_text_preview])
+    def update_info(backbone):
+        return f"Streaming: {'✅' if BACKBONE_CONFIGS[backbone]['supports_streaming'] else '❌'}"
+    backbone_select.change(update_info, backbone_select, model_status)
+    backbone_select.change(update_voice_dropdown, [backbone_select, voice_select], voice_select)
 
-    # Tab handling - FIXED WITH *ARGS
-    tab_preset = tabs.children[0]
-    tab_custom = tabs.children[1]
-    
-    # Dùng *args để nhận bất kỳ số lượng tham số nào (0 hoặc 1), tránh lỗi Warning
-    tab_preset.select(fn=lambda *args: "preset_mode", inputs=None, outputs=current_mode)
-    tab_custom.select(fn=lambda *args: "custom_mode", inputs=None, outputs=current_mode)
+    tabs.children[0].select(lambda: "preset_mode", outputs=current_mode)
+    tabs.children[1].select(lambda: "custom_mode", outputs=current_mode)
+
+    btn_load.click(load_model, [backbone_select, codec_select, device_choice], model_status)
 
     btn_generate.click(
         fn=synthesize_speech,
-        inputs=[text_input, voice_select, custom_audio, custom_text, current_mode],
+        inputs=[text_input, voice_select, custom_audio, custom_text, current_mode, generation_mode],
         outputs=[audio_output, status_output]
     )
 
 if __name__ == "__main__":
-    demo.queue().launch(
-        server_name="127.0.0.1", 
-        server_port=7860, 
-        share=False
-    )
+    demo.queue().launch(server_name="127.0.0.1", server_port=7860)
