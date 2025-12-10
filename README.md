@@ -14,53 +14,11 @@ Trained on ~1000 hours of high-quality Vietnamese speech, this model represents 
 - **Better voice cloning**: Higher fidelity and speaker consistency
 - **Real-time synthesis**: 24 kHz waveform generation on CPU or GPU
 
-Fine-tuned from **NeuTTS Air**, VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
+VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
 
 **Author:** Phạm Nguyễn Ngọc Bảo
-> 📢 Sắp ra mắt: Hỗ trợ GGUF cho CPU!
-> Chúng tôi đang gấp rút hoàn thiện phiên bản hỗ trợ GGUF để cho phép mô hình chạy hiệu quả trên CPU mà không cần GPU mạnh.
-> Phiên bản này dự kiến sẽ được ra mắt sớm, trong 1-2 tuần tới. Hãy theo dõi kho lưu trữ GitHub để nhận thông báo mới nhất!
 
----
-
-## ✨ Features
-
-- 🎙️ High-quality Vietnamese speech at 24 kHz
-- 🚀 Instant voice cloning using a short reference clip
-- 💻 Fully offline inference (no internet required)
-- 🎯 Multiple curated reference voices (Southern accent, male & female)
-- ⚡ Real-time or faster-than-real-time synthesis on CPU/GPU
-- 🖥️ Ready-to-use Python API, CLI scripts, and a Gradio UI
-
----
-
-## 💝 Support This Project
-
-**VieNeu-TTS** is a free, open-source project. However, training high-quality TTS models on **1000+ hours of speech data** requires significant computational resources.
-
-If you find this project useful, please consider supporting its development:
-
-<div align="center">
-
-[![Buy Me a Coffee](https://img.shields.io/badge/☕_Buy_Me_a_Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/pnnbao)
-
-</div>
-
-**Your support helps:**
-
-- 💰 **GPU Training Costs**: Training on 1000+ hours costs thousands of dollars in compute
-- 🚀 **New Features**: Emotion control, speaking styles, GGUF quantization
-- 📊 **Dataset Expansion**: Collecting more diverse Vietnamese voices (North, Central, South)
-- 🎯 **Quality Improvements**: Better pronunciation, naturalness, and voice cloning fidelity
-- 🌍 **Bilingual Support**: Vietnamese + English code-switching capabilities
-- 🔧 **Maintenance**: Bug fixes, updates, and community support
-
-<div align="center">
-
-*Every contribution, big or small, makes a real difference!*  
-*Thank you for supporting Vietnamese AI development!* 🇻🇳🙏
-
-</div>
+[<img width="600" height="595" alt="VieNeu-TTS" src="https://github.com/user-attachments/assets/6b32df9d-7e2e-474f-94c8-43d6fa586d15" />](https://github.com/user-attachments/assets/6b32df9d-7e2e-474f-94c8-43d6fa586d15)
 
 ---
 
@@ -245,7 +203,6 @@ uv run main.py
 This script runs several normalized sentences using the bundled sample voice and writes `output_*.wav` files under `output_audio/`.
 
 ### Gradio web demo
-[<img width="600" height="595" alt="VieNeu-TTS" src="https://github.com/user-attachments/assets/01f3016c-8b59-4a48-bc0e-c2248c22cec5" />](https://github.com/user-attachments/assets/01f3016c-8b59-4a48-bc0e-c2248c22cec5)
 
 ```bash
 uv run gradio_app.py
@@ -257,23 +214,6 @@ Then open `http://127.0.0.1:7860` to:
 - Upload your own reference audio + transcript
 - Enter up to 250 characters per request (recommended)
 - Preview or download the synthesized audio
-
-### Long-text helper
-
-`examples/infer_long_text.py` chunks long passages into ≤256-character segments (prefers sentence boundaries) and synthesizes them sequentially.
-
-```bash
-uv run -m examples.infer_long_text --text-file examples/sample_long_text.txt \
-  --ref-audio sample/Vĩnh\ \(nam\ miền\ Nam\).wav \
-  --ref-text sample/Vĩnh\ \(nam\ miền\ Nam\).txt \
-  --output output_audio/sample_long_text.wav
-```
-
-[🎵 Listen to sample (MP3)](https://github.com/user-attachments/files/23436562/longtext.mp3)
-
-Use `--text "raw paragraph here"` to infer without creating a file.
-
----
 
 ## 🔈 Reference Voices (`sample/`)
 
@@ -291,27 +231,6 @@ Use `--text "raw paragraph here"` to infer without creating a file.
 | Dung (nữ miền Nam)      | Female | South  | Female voice, South accent |
 
 Each reference voice includes both a `.wav` audio file and a matching `.txt` transcript file.
-
----
-
-## ✅ Best Practices & Limits
-
-- Keep each inference request ≤250 characters to stay within the 2 048-token context window (reference speech tokens also consume context).
-- Normalize both the target text and the reference transcript before inference (built-in scripts already do this).
-- Trim reference audio to ~3–5 seconds for faster processing and consistent quality.
-- For long articles, split by paragraph/sentence and stitch the outputs – use `examples/infer_long_text.py`.
-- Always obtain consent before cloning someone’s voice.
-
----
-
-## ⚠️ Troubleshooting
-
-| Issue | Likely cause | How to fix |
-|-------|--------------|------------|
-| `ValueError: Could not find libespeak...` | eSpeak NG is missing or the path is incorrect | Install eSpeak NG and set `PHONEMIZER_ESPEAK_LIBRARY` if required |
-| `401 Unauthorized` when downloading `facebook/w2v-bert-2.0` | Invalid or stale Hugging Face token in the environment | Run `huggingface-cli login --token …` or remove `HF_TOKEN` to use anonymous access |
-| `CUDA out of memory` | GPU VRAM is insufficient | Switch to CPU (`backbone_device="cpu"` & `codec_device="cpu"`) or use a quantized checkpoint |
-| `No valid speech tokens found` | Prompt too long, empty text, or poor reference clip | Shorten the input, double-check normalization, or pick another reference sample |
 
 ---
 
@@ -384,6 +303,9 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
+
+
 
 
 
