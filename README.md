@@ -34,11 +34,11 @@ VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
 
 ### Model Variants
 
-| Model | Format | Device | Quality | Speed | Streaming | RAM Usage |
-|-------|--------|--------|---------|-------|-----------|-----------|
-| VieNeu-TTS | PyTorch | GPU/CPU | ⭐⭐⭐⭐⭐ | Medium | ❌ | ~2GB |
-| VieNeu-TTS-q8-gguf | GGUF Q8 | CPU/GPU | ⭐⭐⭐⭐ | Fast | ✅ | ~1.5GB |
-| VieNeu-TTS-q4-gguf | GGUF Q4 | CPU/GPU | ⭐⭐⭐ | Very Fast | ✅ | ~1GB |
+| Model | Format | Device | Quality | Speed | Streaming |
+|-------|--------|--------|---------|-------|-----------|
+| VieNeu-TTS | PyTorch | GPU/CPU | ⭐⭐⭐⭐⭐ | Medium | ❌ |
+| VieNeu-TTS-q8-gguf | GGUF Q8 | CPU/GPU | ⭐⭐⭐⭐ | Fast | ✅ |
+| VieNeu-TTS-q4-gguf | GGUF Q4 | CPU/GPU | ⭐⭐⭐ | Very Fast | ✅ |
 
 **Recommendations:**
 - **GPU users**: Use `VieNeu-TTS` (PyTorch) for best quality
@@ -394,3 +394,4 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
