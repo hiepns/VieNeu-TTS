@@ -489,7 +489,8 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                 codec_select = gr.Dropdown(list(CODEC_CONFIGS.keys()), value="NeuCodec (Standard)", label="🎵 Codec")
                 device_choice = gr.Radio(["Auto", "CPU", "CUDA"], value="Auto", label="🖥️ Device")
             
-            
+            gr.Markdown("⚠️ **Lưu ý:** Nếu máy bạn chỉ có CPU vui lòng chọn phiên bản pnnbao-ump/VieNeu-TTS-q4-gguf để có tốc độ nhanh nhất.")
+
             btn_load = gr.Button("🔄 Tải Model", variant="primary")
             model_status = gr.Markdown("⏳ Chưa tải model.")
         
