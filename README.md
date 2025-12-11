@@ -106,6 +106,12 @@ uv sync
 CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install llama-cpp-python --force-reinstall --no-cache-dir
 ```
 
+**Optional: Install PyTorch with CUDA (GPU users)**  
+`uv sync` installs the default CPU wheels. If you want CUDA:
+- CUDA 12.1: `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121`
+- CUDA 11.8: `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118`
+Skip this step if you only need CPU.
+
 ---
 
 ## 📦 Project Structure

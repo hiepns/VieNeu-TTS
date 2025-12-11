@@ -1,10 +1,3 @@
-[tool.uv]
-index-strategy = "unsafe-best-match"
-
-[[tool.uv.index]]
-name = "pytorch"
-url = "https://download.pytorch.org/whl/cu118"
-
 [project]
 name = "VieNeu-TTS"
 version = "0.1.0"
@@ -23,8 +16,3 @@ dependencies = [
     "onnxruntime>=1.23.2",
     "llama-cpp-python>=0.3.16",
 ]
-
-[tool.uv.sources]
-torch = { index = "pytorch" }
-torchvision = { index = "pytorch" }
-torchaudio = { index = "pytorch" }
