@@ -3,15 +3,15 @@ text_settings:
   max_total_chars_streaming: 3000
 
 backbone_configs:
-  "SafeTensor (GPU)":
+  "VieNeu-TTS (GPU)":
     repo: pnnbao-ump/VieNeu-TTS
     supports_streaming: false
     description: Chất lượng cao nhất, yêu cầu GPU
-  "GGUF Q8":
+  "VieNeu-TTS-q8-gguf":
     repo: pnnbao-ump/VieNeu-TTS-q8-gguf
     supports_streaming: true
     description: Cân bằng giữa chất lượng và tốc độ
-  "GGUF Q4":
+  "VieNeu-TTS-q4-gguf":
     repo: pnnbao-ump/VieNeu-TTS-q4-gguf
     supports_streaming: true
     description: Nhẹ nhất, phù hợp CPU

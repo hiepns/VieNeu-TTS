@@ -94,12 +94,12 @@ def load_model(backbone_choice, codec_choice, device_choice):
         current_codec = codec_choice
         model_loaded = True  # ✨ Đánh dấu đã load xong
         
-        streaming_support = "✅ Có" if backbone_config['supports_streaming'] else "❌ Không"
-        preencoded_note = "\n⚠️ Codec này cần sử dụng pre-encoded codes (.pt files)" if codec_config['use_preencoded'] else ""
+        note_for_llama_cpp = "\n⚠️ Lưu ý: Nếu bạn chọn gpu (cuda) cho bản gguf cần phải cài đặt đúng theo hướng dẫn ở link này để tận dụng được GPU: https://pypi.org/project/llama-cpp-python/"
+        preencoded_note = "\n⚠️ Codec ONNX cần sử dụng pre-encoded codes (.pt files)" if codec_config['use_preencoded'] else ""
         
         success_msg = (
             f"✅ Model đã tải thành công!\n\n"
-            f"🦜 Model Device: {backbone_device.upper()}\n\n"
+            f"🦜 Model Device: {backbone_device.upper()}{note_for_llama_cpp}\n\n"
             f"🎵 Codec Device: {codec_device.upper()}{preencoded_note}"
         )
         
@@ -130,7 +130,7 @@ GGUF_ALLOWED_VOICES = [
 
 def get_voice_options(backbone_choice: str):
     """Filter voice options: GGUF only shows the 4 allowed voices."""
-    if "GGUF" in backbone_choice:
+    if "gguf" in backbone_choice:
         return [v for v in GGUF_ALLOWED_VOICES if v in VOICE_SAMPLES]
     return list(VOICE_SAMPLES.keys())
 
@@ -388,15 +388,63 @@ css = """
 .header-title {
     font-size: 2.5rem;
     font-weight: 800;
+    /* Bỏ hiệu ứng tô màu gradient ở đây và chuyển nó sang thẻ con */
+}
+.gradient-text {
     background: -webkit-linear-gradient(45deg, #60A5FA, #22D3EE);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+}
+.header-icon {
+    color: white; /* Ép màu trắng */
 }
 .status-box {
     font-weight: bold;
     text-align: center;
     border: none;
     background: transparent;
+}
+.model-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid #cbd5e1;
+}
+.model-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.model-card-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    font-size: 0.9rem;
+    text-align: center;
+}
+.model-card-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: #475569;
+}
+.model-card-link {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+.model-card-link:hover {
+    color: #2563eb;
+    text-decoration: underline;
 }
 """
 
@@ -409,14 +457,35 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
     with gr.Column(elem_classes="container"):
         gr.HTML("""
 <div class="header-box">
-    <h1 class="header-title">🦜 VieNeu-TTS Studio</h1>
+    <h1 class="header-title">
+        <span class="header-icon">🦜</span>
+        <span class="gradient-text">VieNeu-TTS Studio</span>
+    </h1>
+    <div class="model-card-content">
+        <div class="model-card-item">
+            <strong>Models:</strong>
+            <a href="https://huggingface.co/pnnbao-ump/VieNeu-TTS" target="_blank" class="model-card-link">VieNeu-TTS</a>
+            <span>•</span>
+            <a href="https://huggingface.co/pnnbao-ump/VieNeu-TTS-q4-gguf" target="_blank" class="model-card-link">Q4-GGUF</a>
+            <span>•</span>
+            <a href="https://huggingface.co/pnnbao-ump/VieNeu-TTS-q8-gguf" target="_blank" class="model-card-link">Q8-GGUF</a>
+        </div>
+        <div class="model-card-item">
+            <strong>Repository:</strong>
+            <a href="https://github.com/pnnbao97/VieNeu-TTS" target="_blank" class="model-card-link">GitHub</a>
+        </div>
+        <div class="model-card-item">
+            <strong>Tác giả:</strong>
+            <span>Phạm Nguyễn Ngọc Bảo</span>
+        </div>
+    </div>
 </div>
         """)
         
         # --- CONFIGURATION ---
         with gr.Group():
             with gr.Row():
-                backbone_select = gr.Dropdown(list(BACKBONE_CONFIGS.keys()), value="GGUF Q8", label="🦜 Backbone")
+                backbone_select = gr.Dropdown(list(BACKBONE_CONFIGS.keys()), value="VieNeu-TTS (GPU)", label="🦜 Backbone")
                 codec_select = gr.Dropdown(list(CODEC_CONFIGS.keys()), value="NeuCodec (Standard)", label="🎵 Codec")
                 device_choice = gr.Radio(["Auto", "CPU", "CUDA"], value="Auto", label="🖥️ Device")
             
@@ -435,7 +504,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                 
                 with gr.Tabs() as tabs:
                     with gr.TabItem("👤 Preset", id="preset_mode"):
-                        initial_voices = get_voice_options("GGUF Q8")
+                        initial_voices = get_voice_options("GGUF Q4")
                         default_voice = initial_voices[0] if initial_voices else None
                         voice_select = gr.Dropdown(initial_voices, value=default_voice, label="Giọng mẫu")
                     
