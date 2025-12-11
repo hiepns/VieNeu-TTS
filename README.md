@@ -47,9 +47,20 @@ VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
 
 ---
 
+## ✅ Todo & Status
+
+- [x] Publish safetensor artifacts
+- [x] Release GGUF Q4 / Q8 models
+- [x] Release datasets (1000h and 140h)
+- [ ] Enable streaming on GPU
+- [ ] Provide Dockerized setup
+- [ ] Release fine-tuning code
+
+---
+
 ## 🏁 Getting Started
 
-> **📺 Hướng dẫn cài đặt bằng tiếng Việt**: Xem video chi tiết tại [Facebook Reel](https://www.facebook.com/reel/1362972618623766)  
+> **📺 Vietnamese setup guide**: See the detailed video on [Facebook Reel](https://www.facebook.com/reel/1362972618623766)
 
 ### 1. Clone the repository
 
@@ -127,8 +138,7 @@ VieNeu-TTS/
 │   └── phoneme_dict.json      # Phoneme dictionary
 ├── vieneu_tts/
 │   ├── __init__.py
-│   └── vieneu_tts.py          # Core VieNeuTTS implementation
-├── web_ui/                    # React-based web UI (optional)
+│   └── vieneu_tts.py          # Core VieNeuTTS implementatio
 ├── README.md
 ├── requirements.txt
 └── pyproject.toml
@@ -173,7 +183,7 @@ with open("./sample/Vĩnh (nam miền Nam).txt", "r", encoding="utf-8") as f:
     ref_text = f.read()
 
 # Generate speech
-text = "Xin chào, đây là một ví dụ về tổng hợp giọng nói tiếng Việt."
+text = "Hello, this is an example of Vietnamese speech synthesis."
 wav = tts.infer(text, ref_codes, ref_text)
 
 # Save audio
@@ -182,65 +192,65 @@ sf.write("output.wav", wav, 24000)
 
 ---
 
-## 💻 Sử dụng GGUF Q4 và Q8 cho CPU
+## 💻 Using GGUF Q4 and Q8 on CPU
 
-GGUF models được tối ưu hóa đặc biệt cho CPU, giúp chạy nhanh hơn và tiết kiệm bộ nhớ so với model PyTorch gốc.
+GGUF models are optimized for CPU, providing faster speed and lower memory usage than the original PyTorch model.
 
-### Cách 1: Sử dụng qua Gradio Web UI
+### Option 1: Gradio Web UI
 
-1. **Khởi động Gradio app:**
+1. **Start the Gradio app:**
    ```bash
    uv run gradio_app.py
    ```
 
-2. **Chọn model trong giao diện:**
-   - **Backbone**: Chọn `VieNeu-TTS-q4-gguf` (nhanh nhất) hoặc `VieNeu-TTS-q8-gguf` (chất lượng tốt hơn)
-   - **Codec**: Chọn `NeuCodec ONNX (Fast CPU)` để tối ưu tốc độ trên CPU
-   - **Device**: Chọn `CPU`
+2. **Pick models in the UI:**
+   - **Backbone**: Choose `VieNeu-TTS-q4-gguf` (fastest) or `VieNeu-TTS-q8-gguf` (higher quality)
+   - **Codec**: Choose `NeuCodec ONNX (Fast CPU)` to maximize CPU speed
+   - **Device**: Choose `CPU`
 
-3. **Click "🔄 Tải Model"** và đợi model tải về (lần đầu sẽ mất thời gian)
+3. **Click "🔄 Load Model"** and wait for the first download
 
-4. **Sử dụng như bình thường** - model sẽ tự động chạy trên CPU
+4. **Use as normal** — the model will automatically run on CPU
 
-### Cách 2: Sử dụng qua Python code
+### Option 2: Python code
 
-#### Sử dụng GGUF Q4 (nhẹ nhất, nhanh nhất)
+#### Use GGUF Q4 (lightest, fastest)
 
 ```python
 from vieneu_tts import VieNeuTTS
 import soundfile as sf
 import torch
 
-# Khởi tạo model Q4 cho CPU
+# Initialize Q4 model for CPU
 tts = VieNeuTTS(
     backbone_repo="pnnbao-ump/VieNeu-TTS-q4-gguf",
-    backbone_device="cpu",  # Sử dụng CPU
-    codec_repo="neuphonic/neucodec-onnx-decoder",  # ONNX codec cho CPU
+    backbone_device="cpu",  # Use CPU
+    codec_repo="neuphonic/neucodec-onnx-decoder",  # ONNX codec for CPU
     codec_device="cpu"
 )
 
-# Load reference codes (pre-encoded cho ONNX codec)
+# Load reference codes (pre-encoded for ONNX codec)
 ref_codes = torch.load("./sample/Vĩnh (nam miền Nam).pt", map_location="cpu")
 with open("./sample/Vĩnh (nam miền Nam).txt", "r", encoding="utf-8") as f:
     ref_text = f.read()
 
-# Tổng hợp giọng nói
-text = "Đây là ví dụ sử dụng model Q4 trên CPU."
+# Synthesize speech
+text = "This is an example using the Q4 model on CPU."
 wav = tts.infer(text, ref_codes, ref_text)
 
-# Lưu file audio
+# Save audio file
 sf.write("output_q4.wav", wav, 24000)
-print("✅ Đã tạo file output_q4.wav")
+print("✅ Created output_q4.wav")
 ```
 
-#### Sử dụng GGUF Q8 (chất lượng tốt hơn)
+#### Use GGUF Q8 (better quality)
 
 ```python
 from vieneu_tts import VieNeuTTS
 import soundfile as sf
 import torch
 
-# Khởi tạo model Q8 cho CPU
+# Initialize Q8 model for CPU
 tts = VieNeuTTS(
     backbone_repo="pnnbao-ump/VieNeu-TTS-q8-gguf",
     backbone_device="cpu",
@@ -253,25 +263,25 @@ ref_codes = torch.load("./sample/Vĩnh (nam miền Nam).pt", map_location="cpu")
 with open("./sample/Vĩnh (nam miền Nam).txt", "r", encoding="utf-8") as f:
     ref_text = f.read()
 
-# Tổng hợp
-text = "Đây là ví dụ sử dụng model Q8 trên CPU với chất lượng tốt hơn."
+# Synthesize
+text = "This is an example using the Q8 model on CPU with better quality."
 wav = tts.infer(text, ref_codes, ref_text)
 
 sf.write("output_q8.wav", wav, 24000)
-print("✅ Đã tạo file output_q8.wav")
+print("✅ Created output_q8.wav")
 ```
 
-### Streaming với GGUF models
+### Streaming with GGUF models
 
-GGUF models hỗ trợ streaming inference, cho phép nghe audio trong khi đang tạo. 
+GGUF models support streaming inference, letting you listen while audio is being generated.
 
-### Lưu ý quan trọng khi sử dụng GGUF trên CPU
+### Important notes for GGUF on CPU
 
-1. **Pre-encoded codes**: Khi sử dụng `neuphonic/neucodec-onnx-decoder`, bạn cần sử dụng file `.pt` (pre-encoded codes) thay vì encode từ audio. Các file `.pt` đã có sẵn trong thư mục `sample/`.
+1. **Pre-encoded codes**: When using `neuphonic/neucodec-onnx-decoder`, use `.pt` files (pre-encoded codes) instead of encoding from audio. `.pt` files are available in `sample/`.
 
-2. **Nếu không có file .pt**: Bạn có thể encode từ audio bằng cách sử dụng codec PyTorch trước:
+2. **If you do not have a .pt file**: You can encode from audio using the PyTorch codec first:
    ```python
-   # Tạm thời dùng PyTorch codec để encode
+   # Temporarily use the PyTorch codec to encode
    tts_temp = VieNeuTTS(
        backbone_repo="pnnbao-ump/VieNeu-TTS-q4-gguf",
        backbone_device="cpu",
@@ -282,12 +292,12 @@ GGUF models hỗ trợ streaming inference, cho phép nghe audio trong khi đang
    torch.save(ref_codes, "./sample/Vĩnh (nam miền Nam).pt")
    ```
 
-3. **Tối ưu hiệu năng CPU**:
-   - Sử dụng Q4 cho tốc độ tối đa
-   - Sử dụng ONNX codec cho codec decoding nhanh hơn
-   - Giảm `max_chars_per_chunk` nếu gặp vấn đề về bộ nhớ
+3. **Optimize CPU performance**:
+   - Use Q4 for maximum speed
+   - Use the ONNX codec for faster decoding
+   - Reduce `max_chars_per_chunk` if you hit memory limits
 
-4. **GPU acceleration (tùy chọn)**: Nếu có NVIDIA GPU và đã cài `llama-cpp-python` với CUDA, bạn có thể dùng `backbone_device="gpu"` để tăng tốc.
+4. **GPU acceleration (optional)**: If you have an NVIDIA GPU and installed `llama-cpp-python` with CUDA, set `backbone_device="gpu"` to speed things up.
 
 ---
 
@@ -311,7 +321,7 @@ Each reference voice includes:
 - `.txt` - Transcript file
 - `.pt` - Pre-encoded codes (for ONNX codec)
 
-**Note:** GGUF models hiện tại chỉ hỗ trợ 4 giọng: Vĩnh, Bình, Ngọc, và Dung.
+**Note:** GGUF models currently support only 4 voices: Vĩnh, Bình, Ngọc, and Dung.
 
 ---
 
