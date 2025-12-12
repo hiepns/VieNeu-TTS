@@ -1,0 +1,47 @@
+x-base-config: &base-config
+  volumes:
+    - ./:/workspace  # Hot-reload: mount local code
+    - huggingface_cache:/root/.cache/huggingface
+    - ./output_audio:/workspace/output_audio
+  env_file:
+    - .env
+  stdin_open: true # Support interactive shell
+  tty: true
+  ports:
+    - "${PORT}:7860"
+  command: ["uv", "run", "gradio_app.py", "--server-name", "0.0.0.0", "--server-port", "7860"]
+
+services:
+  # ========================================================
+  # CPU Profile
+  # ========================================================
+  cpu:
+    <<: *base-config
+    profiles: ["cpu"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.cpu
+      target: dev
+    container_name: vieneu-tts-cpu-dev
+
+  # ========================================================
+  # GPU Profile
+  # ========================================================
+  gpu:
+    <<: *base-config
+    profiles: ["gpu"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gpu
+      target: dev
+    container_name: vieneu-tts-gpu-dev
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  huggingface_cache:

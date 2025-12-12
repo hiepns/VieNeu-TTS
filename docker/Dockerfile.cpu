@@ -1,0 +1,46 @@
+FROM python:3.12-slim AS base
+
+# Thiết lập biến môi trường
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    HF_HOME=/root/.cache/huggingface \
+    PHONEMIZER_ESPEAK_LIBRARY=/usr/lib/x86_64-linux-gnu/libespeak-ng.so.1 \
+    UV_PROJECT_ENVIRONMENT="/opt/venv" \
+    PATH="/opt/venv/bin:$PATH"
+
+# Cài đặt các dependencies hệ thống
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    espeak-ng \
+    libespeak-ng1 \
+    git \
+    curl \
+    wget \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Cài đặt uv
+RUN pip install --no-cache-dir uv
+
+# Thiết lập thư mục làm việc
+WORKDIR /workspace
+
+# --- Stage: Development ---
+FROM base AS dev
+# Trong môi trường dev, chúng ta sẽ mount code từ host
+# Chỉ copy định nghĩa dependencies để cài đặt
+COPY pyproject.toml requirements.txt ./
+RUN uv sync
+# Command mặc định cho dev (có thể override)
+CMD ["/bin/bash"]
+
+# --- Stage: Production ---
+FROM base AS prod
+# Copy toàn bộ source code
+COPY . .
+# Cài đặt dependencies (không bao gồm dev deps)
+RUN uv sync --no-dev --frozen
+# Expose port
+EXPOSE 7860
+# Command mặc định cho prod
+CMD ["uv", "run", "gradio_app.py", "--server-name", "0.0.0.0", "--server-port", "7860"]
+
