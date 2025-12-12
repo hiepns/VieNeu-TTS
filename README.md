@@ -60,7 +60,8 @@ VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
 
 ## 🏁 Getting Started
 
-> **📺 Hướng dẫn cài đặt bằng video Tiếng Việt**: See the detailed video on [Facebook Reel](https://www.facebook.com/100027984306273/videos/2267260530419961/)
+> **🐳 Hướng dẫn cài bằng Docker: [Deploy.md](./Deploy.md)  
+> **📺 Hướng dẫn cài đặt từ source bằng video Tiếng Việt**: See the detailed video on [Facebook Reel](https://www.facebook.com/100027984306273/videos/2267260530419961/)
 
 ### 1. Clone the repository
 
@@ -420,6 +421,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
