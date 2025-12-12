@@ -52,7 +52,7 @@ VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
 - [x] Publish safetensor artifacts
 - [x] Release GGUF Q4 / Q8 models
 - [x] Release datasets (1000h and 140h)
-- [ ] Enable streaming on GPU
+- [x] Enable streaming on GPU
 - [ ] Provide Dockerized setup
 - [ ] Release fine-tuning code
 
@@ -420,4 +420,5 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
