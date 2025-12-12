@@ -2,7 +2,7 @@ import gradio as gr
 import soundfile as sf
 import tempfile
 import torch
-from vieneu_tts import VieNeuTTS
+from vieneu_tts import VieNeuTTS, FastVieNeuTTS
 import os
 import time
 import numpy as np
@@ -41,84 +41,176 @@ if not VOICE_SAMPLES:
 tts = None
 current_backbone = None
 current_codec = None
-model_loaded = False  # ✨ THÊM STATE
+model_loaded = False
+using_lmdeploy = False
 
-def load_model(backbone_choice, codec_choice, device_choice):
-    """Load model with specified configuration"""
-    global tts, current_backbone, current_codec, model_loaded
+def should_use_lmdeploy(backbone_choice, device_choice):
+    """Determine if we should use LMDeploy backend."""
+    if "GGUF" in backbone_choice:
+        return False
     
-    # ✨ Trả về nhiều outputs để update UI ngay lập tức
+    if device_choice == "Auto":
+        has_gpu = torch.cuda.is_available()
+    elif device_choice == "CUDA":
+        has_gpu = torch.cuda.is_available()
+    else:
+        has_gpu = False
+    
+    return has_gpu
+
+def load_model(backbone_choice, codec_choice, device_choice, enable_triton, kv_quant, max_batch_size):
+    """Load model with optimizations and max batch size control"""
+    global tts, current_backbone, current_codec, model_loaded, using_lmdeploy
+    
     yield (
-        "⏳ Đang tải model, vui lòng đợi...",
-        gr.update(interactive=False),  # Disable nút "Bắt đầu"
-        gr.update(interactive=False)   # Disable nút "Tải Model"
+        "⏳ Đang tải model với tối ưu hóa... Lưu ý: Quá trình này sẽ tốn thời gian. Vui lòng kiên nhẫn.",
+        gr.update(interactive=False),
+        gr.update(interactive=False)
     )
     
     try:
         backbone_config = BACKBONE_CONFIGS[backbone_choice]
         codec_config = CODEC_CONFIGS[codec_choice]
         
-        # Determine devices
-        if device_choice == "Auto":
-            if "GGUF" in backbone_choice:
-                backbone_device = "gpu" if torch.cuda.is_available() else "cpu"
-            else:
-                backbone_device = "cuda" if torch.cuda.is_available() else "cpu"
+        use_lmdeploy = should_use_lmdeploy(backbone_choice, device_choice)
+        
+        if use_lmdeploy:
+            print(f"🚀 Using LMDeploy backend with optimizations")
+            
+            backbone_device = "cuda"
             
             if "ONNX" in codec_choice:
                 codec_device = "cpu"
             else:
                 codec_device = "cuda" if torch.cuda.is_available() else "cpu"
-        else:
-            backbone_device = device_choice.lower()
-            codec_device = device_choice.lower()
             
-            if "ONNX" in codec_choice:
-                codec_device = "cpu"
+            print(f"📦 Loading optimized model...")
+            print(f"   Backbone: {backbone_config['repo']} on {backbone_device}")
+            print(f"   Codec: {codec_config['repo']} on {codec_device}")
+            print(f"   Triton: {'Enabled' if enable_triton else 'Disabled'}")
+            print(f"   KV Quant: {kv_quant}")
+            print(f"   Max Batch Size: {max_batch_size}")
+            
+            try:
+                tts = FastVieNeuTTS(
+                    backbone_repo=backbone_config["repo"],
+                    backbone_device=backbone_device,
+                    codec_repo=codec_config["repo"],
+                    codec_device=codec_device,
+                    memory_util=0.3,
+                    tp=1,
+                    enable_prefix_caching=True,
+                    quant_policy=kv_quant,
+                    enable_triton=enable_triton,
+                    max_batch_size=max_batch_size,  # ✅ Pass max_batch_size
+                )
+                using_lmdeploy = True
+                
+                # Pre-cache voice references
+                print("📝 Pre-caching voice references...")
+                for voice_name, voice_info in VOICE_SAMPLES.items():
+                    audio_path = voice_info["audio"]
+                    text_path = voice_info["text"]
+                    if os.path.exists(audio_path) and os.path.exists(text_path):
+                        with open(text_path, "r", encoding="utf-8") as f:
+                            ref_text = f.read()
+                        tts.get_cached_reference(voice_name, audio_path, ref_text)
+                print(f"   ✅ Cached {len(VOICE_SAMPLES)} voices")
+                
+            except ImportError:
+                yield (
+                    "⚠️ LMDeploy không được cài đặt. Vui lòng cài lmdeploy (pip install lmdeploy) để tận dụng tối đa GPU. Fallback về HF Transformers...",
+                    gr.update(interactive=False),
+                    gr.update(interactive=True)
+                )
+                time.sleep(2)
+                use_lmdeploy = False
+                using_lmdeploy = False
         
-        if "GGUF" in backbone_choice and backbone_device == "cuda":
-            backbone_device = "gpu"
-        
-        print(f"📦 Đang tải model...")
-        print(f"   Backbone: {backbone_config['repo']} on {backbone_device}")
-        print(f"   Codec: {codec_config['repo']} on {codec_device}")
-        
-        tts = VieNeuTTS(
-            backbone_repo=backbone_config["repo"],
-            backbone_device=backbone_device,
-            codec_repo=codec_config["repo"],
-            codec_device=codec_device
-        )
+        if not use_lmdeploy:
+            print(f"📦 Using original backend")
+            
+            if device_choice == "Auto":
+                if "GGUF" in backbone_choice:
+                    backbone_device = "gpu" if torch.cuda.is_available() else "cpu"
+                else:
+                    backbone_device = "cuda" if torch.cuda.is_available() else "cpu"
+                
+                if "ONNX" in codec_choice:
+                    codec_device = "cpu"
+                else:
+                    codec_device = "cuda" if torch.cuda.is_available() else "cpu"
+            else:
+                backbone_device = device_choice.lower()
+                codec_device = device_choice.lower()
+                
+                if "ONNX" in codec_choice:
+                    codec_device = "cpu"
+            
+            if "GGUF" in backbone_choice and backbone_device == "cuda":
+                backbone_device = "gpu"
+            
+            print(f"📦 Loading model...")
+            print(f"   Backbone: {backbone_config['repo']} on {backbone_device}")
+            print(f"   Codec: {codec_config['repo']} on {codec_device}")
+            
+            tts = VieNeuTTS(
+                backbone_repo=backbone_config["repo"],
+                backbone_device=backbone_device,
+                codec_repo=codec_config["repo"],
+                codec_device=codec_device
+            )
+            using_lmdeploy = False
         
         current_backbone = backbone_choice
         current_codec = codec_choice
-        model_loaded = True  # ✨ Đánh dấu đã load xong
+        model_loaded = True
         
-        note_for_llama_cpp = "\n⚠️ Lưu ý: Nếu bạn chọn gpu (cuda) cho bản gguf cần phải cài đặt đúng theo hướng dẫn ở link này để tận dụng được GPU: https://pypi.org/project/llama-cpp-python/"
-        preencoded_note = "\n⚠️ Codec ONNX cần sử dụng pre-encoded codes (.pt files)" if codec_config['use_preencoded'] else ""
+        # Success message with optimization info
+        backend_name = "🚀 LMDeploy (Optimized)" if using_lmdeploy else "📦 Standard"
+        device_info = "cuda" if use_lmdeploy else (backbone_device if not use_lmdeploy else "N/A")
+        
+        streaming_support = "✅ Có" if backbone_config['supports_streaming'] else "❌ Không"
+        preencoded_note = "\n⚠️ Codec này cần sử dụng pre-encoded codes (.pt files)" if codec_config['use_preencoded'] else ""
+        
+        opt_info = ""
+        if using_lmdeploy and hasattr(tts, 'get_optimization_stats'):
+            stats = tts.get_optimization_stats()
+            opt_info = (
+                f"\n\n🔧 Tối ưu hóa:"
+                f"\n  • Triton: {'✅' if stats['triton_enabled'] else '❌'}"
+                f"\n  • KV Cache Quant: {stats['kv_quant']}-bit"
+                f"\n  • Max Batch Size: {max_batch_size}"
+                f"\n  • Reference Cache: {stats['cached_references']} voices"
+                f"\n  • Prefix Caching: ✅"
+            )
         
         success_msg = (
             f"✅ Model đã tải thành công!\n\n"
-            f"🦜 Model Device: {backbone_device.upper()}{note_for_llama_cpp}\n\n"
-            f"🎵 Codec Device: {codec_device.upper()}{preencoded_note}"
+            f"🔧 Backend: {backend_name}\n"
+            f"🦜 Model Device: {device_info.upper()}\n"
+            f"🎵 Codec Device: {codec_device.upper()}{preencoded_note}\n"
+            f"🌊 Streaming: {streaming_support}{opt_info}"
         )
         
         yield (
             success_msg,
-            gr.update(interactive=True),   # ✨ Enable nút "Bắt đầu"
-            gr.update(interactive=True)    # Enable nút "Tải Model"
+            gr.update(interactive=True),
+            gr.update(interactive=True)
         )
         
     except Exception as e:
         import traceback
         traceback.print_exc()
         model_loaded = False
+        using_lmdeploy = False
         
         yield (
             f"❌ Lỗi khi tải model: {str(e)}",
-            gr.update(interactive=False),  # Vẫn disable nút "Bắt đầu"
-            gr.update(interactive=True)    # Enable nút "Tải Model" để thử lại
+            gr.update(interactive=False),
+            gr.update(interactive=True)
         )
+
 
 # --- 2. DATA & HELPERS ---
 GGUF_ALLOWED_VOICES = [
@@ -130,7 +222,7 @@ GGUF_ALLOWED_VOICES = [
 
 def get_voice_options(backbone_choice: str):
     """Filter voice options: GGUF only shows the 4 allowed voices."""
-    if "gguf" in backbone_choice:
+    if "gguf" in backbone_choice.lower():
         return [v for v in GGUF_ALLOWED_VOICES if v in VOICE_SAMPLES]
     return list(VOICE_SAMPLES.keys())
 
@@ -155,11 +247,10 @@ def load_reference_info(voice_choice):
             return None, f"❌ Lỗi: {str(e)}"
     return None, ""
 
-def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, generation_mode):
-    """Synthesis with model check"""
-    global tts, current_backbone, current_codec, model_loaded
+def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, generation_mode, use_batch):
+    """Synthesis with optimization support and max batch size control"""
+    global tts, current_backbone, current_codec, model_loaded, using_lmdeploy
     
-    # ✨ Kiểm tra model đã load chưa
     if not model_loaded or tts is None:
         yield None, "⚠️ Vui lòng tải model trước!"
         return
@@ -198,12 +289,16 @@ def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, g
     
     yield None, "📄 Đang xử lý Reference..."
     
-    # Encode reference
+    # Encode or get cached reference
     try:
         if use_preencoded and ref_codes_path and os.path.exists(ref_codes_path):
             ref_codes = torch.load(ref_codes_path, map_location="cpu")
         else:
-            ref_codes = tts.encode_reference(ref_audio_path)
+            # Use cached reference if available (LMDeploy only)
+            if using_lmdeploy and hasattr(tts, 'get_cached_reference') and mode_tab == "preset_mode":
+                ref_codes = tts.get_cached_reference(voice_choice, ref_audio_path, ref_text_raw)
+            else:
+                ref_codes = tts.encode_reference(ref_audio_path)
         
         if isinstance(ref_codes, torch.Tensor):
             ref_codes = ref_codes.cpu().numpy()
@@ -216,7 +311,16 @@ def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, g
     
     # === STANDARD MODE ===
     if generation_mode == "Standard (Một lần)":
-        yield None, f"🚀 Bắt đầu tổng hợp chế độ Standard ({total_chunks} đoạn)..."
+        backend_name = "LMDeploy" if using_lmdeploy else "Standard"
+        batch_info = " (Batch Mode)" if use_batch and using_lmdeploy and total_chunks > 1 else ""
+        
+        # Show batch size info
+        if use_batch and using_lmdeploy and hasattr(tts, 'max_batch_size'):
+            batch_size_info = f" [Max batch: {tts.max_batch_size}]"
+        else:
+            batch_size_info = ""
+        
+        yield None, f"🚀 Bắt đầu tổng hợp {backend_name}{batch_info}{batch_size_info} ({total_chunks} đoạn)..."
         
         all_audio_segments = []
         sr = 24000
@@ -225,15 +329,32 @@ def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, g
         start_time = time.time()
         
         try:
-            for i, chunk in enumerate(text_chunks):
-                yield None, f"⏳ Đang xử lý đoạn {i+1}/{total_chunks}..."
+            # Use batch processing if enabled and using LMDeploy
+            if use_batch and using_lmdeploy and hasattr(tts, 'infer_batch') and total_chunks > 1:
+                # Show how many mini-batches will be processed
+                batch_size = tts.max_batch_size if hasattr(tts, 'max_batch_size') else 8
+                num_batches = (total_chunks + batch_size - 1) // batch_size
                 
-                chunk_wav = tts.infer(chunk, ref_codes, ref_text_raw)
+                yield None, f"⚡ Xử lý {num_batches} mini-batch(es) (max {batch_size} đoạn/batch)..."
                 
-                if chunk_wav is not None and len(chunk_wav) > 0:
-                    all_audio_segments.append(chunk_wav)
-                    if i < total_chunks - 1:
-                        all_audio_segments.append(silence_pad)
+                chunk_wavs = tts.infer_batch(text_chunks, ref_codes, ref_text_raw)
+                
+                for i, chunk_wav in enumerate(chunk_wavs):
+                    if chunk_wav is not None and len(chunk_wav) > 0:
+                        all_audio_segments.append(chunk_wav)
+                        if i < total_chunks - 1:
+                            all_audio_segments.append(silence_pad)
+            else:
+                # Sequential processing
+                for i, chunk in enumerate(text_chunks):
+                    yield None, f"⏳ Đang xử lý đoạn {i+1}/{total_chunks}..."
+                    
+                    chunk_wav = tts.infer(chunk, ref_codes, ref_text_raw)
+                    
+                    if chunk_wav is not None and len(chunk_wav) > 0:
+                        all_audio_segments.append(chunk_wav)
+                        if i < total_chunks - 1:
+                            all_audio_segments.append(silence_pad)
             
             if not all_audio_segments:
                 yield None, "❌ Không sinh được audio nào."
@@ -247,7 +368,26 @@ def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, g
                 output_path = tmp.name
             
             process_time = time.time() - start_time
-            yield output_path, f"✅ Hoàn tất! (Tổng thời gian: {process_time:.2f}s)"
+            backend_info = f" (Backend: {'LMDeploy 🚀' if using_lmdeploy else 'Standard 📦'})"
+            speed_info = f", Tốc độ: {len(final_wav)/sr/process_time:.2f}x realtime" if process_time > 0 else ""
+            
+            yield output_path, f"✅ Hoàn tất! (Thời gian: {process_time:.2f}s{speed_info}){backend_info}"
+            
+            # Cleanup memory
+            if using_lmdeploy and hasattr(tts, 'cleanup_memory'):
+                tts.cleanup_memory()
+            
+        except torch.cuda.OutOfMemoryError as e:
+            yield None, (
+                f"❌ GPU hết VRAM! Hãy thử:\n"
+                f"• Giảm Max Batch Size (hiện tại: {tts.max_batch_size if hasattr(tts, 'max_batch_size') else 'N/A'})\n"
+                f"• Bật KV Cache Quantization (8-bit)\n"
+                f"• Giảm độ dài văn bản\n\n"
+                f"Chi tiết: {str(e)}"
+            )
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            return
             
         except Exception as e:
             import traceback
@@ -270,7 +410,6 @@ def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, g
             nonlocal error_msg
             try:
                 previous_tail = None
-                chunk_count = 0
                 
                 for i, chunk_text in enumerate(text_chunks):
                     stream_gen = tts.infer_stream(chunk_text, ref_codes, ref_text_raw)
@@ -306,7 +445,6 @@ def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, g
                         
                         if len(output_chunk) > 0:
                             audio_queue.put((sr, output_chunk))
-                            chunk_count += 1
                 
                 if previous_tail is not None and len(previous_tail) > 0:
                     audio_queue.put((sr, previous_tail))
@@ -322,7 +460,7 @@ def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, g
         
         threading.Thread(target=producer_thread, daemon=True).start()
         
-        yield (sr, np.zeros(int(sr * 0.05))), "🔄 Đang buffering..."
+        yield (sr, np.zeros(int(sr * 0.05))), "📄 Đang buffering..."
         
         pre_buffer = []
         while len(pre_buffer) < PRE_BUFFER_SIZE:
@@ -338,9 +476,10 @@ def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, g
                 break
         
         full_audio_buffer = []
+        backend_info = "🚀 LMDeploy" if using_lmdeploy else "📦 Standard"
         for sr, audio_data in pre_buffer:
             full_audio_buffer.append(audio_data)
-            yield (sr, audio_data), "🔊 Đang phát..."
+            yield (sr, audio_data), f"🔊 Đang phát ({backend_info})..."
         
         while True:
             try:
@@ -349,7 +488,7 @@ def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, g
                     break
                 sr, audio_data = item
                 full_audio_buffer.append(audio_data)
-                yield (sr, audio_data), "🔊 Đang phát..."
+                yield (sr, audio_data), f"🔊 Đang phát ({backend_info})..."
             except queue.Empty:
                 if error_event.is_set():
                     yield None, f"❌ Lỗi: {error_msg}"
@@ -362,7 +501,12 @@ def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, g
             final_wav = np.concatenate(full_audio_buffer)
             with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
                 sf.write(tmp.name, final_wav, sr)
-                yield tmp.name, "✅ Hoàn tất Streaming!"
+                yield tmp.name, f"✅ Hoàn tất Streaming! ({backend_info})"
+            
+            # Cleanup memory
+            if using_lmdeploy and hasattr(tts, 'cleanup_memory'):
+                tts.cleanup_memory()
+
 
 # --- 4. UI SETUP ---
 theme = gr.themes.Ocean(
@@ -388,7 +532,6 @@ css = """
 .header-title {
     font-size: 2.5rem;
     font-weight: 800;
-    /* Bỏ hiệu ứng tô màu gradient ở đây và chuyển nó sang thẻ con */
 }
 .gradient-text {
     background: -webkit-linear-gradient(45deg, #60A5FA, #22D3EE);
@@ -396,29 +539,13 @@ css = """
     -webkit-text-fill-color: transparent;
 }
 .header-icon {
-    color: white; /* Ép màu trắng */
+    color: white;
 }
 .status-box {
     font-weight: bold;
     text-align: center;
     border: none;
     background: transparent;
-}
-.model-card {
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 25px;
-    border: 1px solid #cbd5e1;
-}
-.model-card-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
 .model-card-content {
     display: flex;
@@ -434,16 +561,16 @@ css = """
     align-items: center;
     justify-content: center;
     gap: 6px;
-    color: #475569;
+    color: #e2e8f0;
 }
 .model-card-link {
-    color: #3b82f6;
+    color: #60A5FA;
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s;
 }
 .model-card-link:hover {
-    color: #2563eb;
+    color: #22D3EE;
     text-decoration: underline;
 }
 """
@@ -489,7 +616,23 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                 codec_select = gr.Dropdown(list(CODEC_CONFIGS.keys()), value="NeuCodec (Standard)", label="🎵 Codec")
                 device_choice = gr.Radio(["Auto", "CPU", "CUDA"], value="Auto", label="🖥️ Device")
             
-            gr.Markdown("⚠️ **Lưu ý:** Nếu máy bạn chỉ có CPU vui lòng chọn phiên bản pnnbao-ump/VieNeu-TTS-q4-gguf để có tốc độ nhanh nhất.")
+            with gr.Row():
+                enable_triton = gr.Checkbox(value=True, label="⚡ Enable Triton Compilation")
+                kv_quant = gr.Radio([0, 8], value=8, label="🔧 KV Cache Quantization", info="8=int8 (save VRAM), 0=disabled")
+                max_batch_size = gr.Slider(
+                    minimum=1, 
+                    maximum=16, 
+                    value=8, 
+                    step=1, 
+                    label="📊 Max Batch Size",
+                    info="Giảm nếu gặp lỗi OOM. 4-6 cho GPU 8GB, 8-12 cho GPU 16GB+"
+                )
+            
+            gr.Markdown(
+                "⚠️ **Lưu ý:** Nếu máy bạn chỉ có CPU vui lòng chọn phiên bản GGUF (Q4/Q8) để có tốc độ nhanh nhất.\n\n"
+                "💡 **Max Batch Size:** Số lượng đoạn văn bản được xử lý cùng lúc. "
+                "Giá trị cao = nhanh hơn nhưng tốn VRAM hơn. Giảm xuống nếu gặp lỗi \"Out of Memory\"."
+            )
 
             btn_load = gr.Button("🔄 Tải Model", variant="primary")
             model_status = gr.Markdown("⏳ Chưa tải model.")
@@ -505,7 +648,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                 
                 with gr.Tabs() as tabs:
                     with gr.TabItem("👤 Preset", id="preset_mode"):
-                        initial_voices = get_voice_options("GGUF Q4")
+                        initial_voices = get_voice_options("VieNeu-TTS (GPU)")
                         default_voice = initial_voices[0] if initial_voices else None
                         voice_select = gr.Dropdown(initial_voices, value=default_voice, label="Giọng mẫu")
                     
@@ -518,10 +661,14 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                     value="Standard (Một lần)",
                     label="Chế độ sinh"
                 )
+                use_batch = gr.Checkbox(
+                    value=True, 
+                    label="⚡ Batch Processing",
+                    info="Xử lý nhiều đoạn cùng lúc (chỉ áp dụng khi sử dụng GPU và đã cài đặt LMDeploy)"
+                )
                 
                 current_mode = gr.Textbox(visible=False, value="preset_mode")
                 
-                # ✨ NÚT BẮT ĐẦU - MẶC ĐỊNH DISABLE
                 btn_generate = gr.Button("🎵 Bắt đầu", variant="primary", size="lg", interactive=False)
             
             # --- OUTPUT ---
@@ -544,18 +691,17 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
         tabs.children[0].select(lambda: "preset_mode", outputs=current_mode)
         tabs.children[1].select(lambda: "custom_mode", outputs=current_mode)
         
-        # ✨ CẬP NHẬT EVENT HANDLER CHO NÚT LOAD
         btn_load.click(
             fn=load_model,
-            inputs=[backbone_select, codec_select, device_choice],
-            outputs=[model_status, btn_generate, btn_load]  # Update cả 3 components
+            inputs=[backbone_select, codec_select, device_choice, enable_triton, kv_quant, max_batch_size],
+            outputs=[model_status, btn_generate, btn_load]
         )
         
         btn_generate.click(
             fn=synthesize_speech,
-            inputs=[text_input, voice_select, custom_audio, custom_text, current_mode, generation_mode],
+            inputs=[text_input, voice_select, custom_audio, custom_text, current_mode, generation_mode, use_batch],
             outputs=[audio_output, status_output]
         )
 
 if __name__ == "__main__":
-    demo.queue().launch(server_name="127.0.0.1", server_port=7860)
+    demo.queue().launch(server_name="127.0.0.1", server_port=7860, favicon_path="🦜")

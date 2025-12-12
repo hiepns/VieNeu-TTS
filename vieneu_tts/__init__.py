@@ -1,4 +1,4 @@
-from .vieneu_tts import VieNeuTTS
+from .vieneu_tts import VieNeuTTS, FastVieNeuTTS
 
-__all__ = ["VieNeuTTS"]
+__all__ = ["VieNeuTTS", "FastVieNeuTTS"]
 

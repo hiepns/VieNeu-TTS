@@ -99,12 +99,18 @@ paru -S aur/espeak-ng
 uv sync
 ```
 
-**Note:** If you plan to use GGUF models with GPU acceleration, you may need to install `llama-cpp-python` with CUDA support:
+**Optional dependencies:**
 
-```bash
-# For CUDA support (optional, only if you have NVIDIA GPU)
-CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install llama-cpp-python --force-reinstall --no-cache-dir
-```
+- **For GGUF models with GPU acceleration:** Install `llama-cpp-python` with CUDA support:
+  ```bash
+  CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install llama-cpp-python --force-reinstall --no-cache-dir
+  ```
+
+- **For LMDeploy optimizations (GPU only):** Install `lmdeploy` for faster GPU inference:
+  ```bash
+  pip install lmdeploy
+  ```
+  This enables batch processing, Triton compilation, and KV cache quantization in the Gradio app.
 
 ---
 
@@ -115,9 +121,9 @@ VieNeu-TTS/
 ├── examples/
 │   ├── infer_long_text.py     # CLI for long-form synthesis (chunked)
 │   └── sample_long_text.txt   # Example paragraph for testing
-├── gradio_app.py              # Local Gradio web demo
+├── gradio_app.py              # Local Gradio web demo with LMDeploy support
 ├── main.py                    # Basic batch inference script
-├── config.yaml                # Configuration for models and voices
+├── config.yaml                # Configuration for models, codecs, and voices
 ├── output_audio/              # Generated audio (created when running scripts)
 ├── sample/                    # Reference voices (audio + transcript + codes)
 │   ├── Bình (nam miền Bắc).wav/txt/pt
@@ -132,17 +138,37 @@ VieNeu-TTS/
 │   └── Vĩnh (nam miền Nam).wav/txt/pt
 ├── utils/
 │   ├── __init__.py
-│   ├── core_utils.py          # Utility functions
+│   ├── core_utils.py          # Text chunking utilities
 │   ├── normalize_text.py      # Vietnamese text normalization pipeline
 │   ├── phonemize_text.py      # Text to phoneme conversion
 │   └── phoneme_dict.json      # Phoneme dictionary
 ├── vieneu_tts/
-│   ├── __init__.py
-│   └── vieneu_tts.py          # Core VieNeuTTS implementatio
+│   ├── __init__.py            # Exports VieNeuTTS and FastVieNeuTTS
+│   └── vieneu_tts.py          # Core VieNeuTTS implementation (VieNeuTTS & FastVieNeuTTS)
 ├── README.md
-├── requirements.txt
-└── pyproject.toml
+├── requirements.txt           # Basic dependencies (legacy)
+├── pyproject.toml             # Project configuration with full dependencies (UV)
+└── uv.lock                    # UV lock file for dependency management
 ```
+
+### Key Components
+
+- **`gradio_app.py`**: Full-featured web interface with support for:
+  - Multiple model variants (PyTorch, GGUF Q4/Q8)
+  - LMDeploy backend with optimizations (Triton, KV cache quantization, batch processing)
+  - Batch processing for faster inference on GPU
+  - Custom voice uploads
+  - Text chunking for long-form synthesis
+  
+- **`vieneu_tts/vieneu_tts.py`**: Core implementation providing:
+  - `VieNeuTTS`: Standard implementation for GPU/CPU
+  - `FastVieNeuTTS`: Optimized implementation with LMDeploy backend for GPU acceleration
+  
+- **`config.yaml`**: Centralized configuration for:
+  - Backbone models (PyTorch, GGUF variants)
+  - Codec configurations (Standard, ONNX)
+  - Voice samples with paths to audio, text, and pre-encoded codes
+  - Text processing settings (chunk size, streaming limits)
 
 ---
 
