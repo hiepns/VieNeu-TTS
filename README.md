@@ -108,7 +108,13 @@ uv sync
 
 - **For LMDeploy optimizations (GPU only):** Install `lmdeploy` for faster GPU inference:
   ```bash
-  pip install lmdeploy
+  uv pip install lmdeploy
+  uv pip install triton
+  ```
+  For Windows:
+  ```bash
+  uv pip install lmdeploy
+  uv pip install triton-windows 
   ```
   This enables batch processing, Triton compilation, and KV cache quantization in the Gradio app.
 
@@ -420,6 +426,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
