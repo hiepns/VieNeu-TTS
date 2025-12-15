@@ -101,11 +101,16 @@ uv sync
 
 **Optional dependencies:**
 
-- **For GGUF models with GPU acceleration:** Install `llama-cpp-python` with CUDA support:
+- **For GGUF models with CPU:** Install `llama-cpp-python` with CPU support:
   ```bash
-  CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install llama-cpp-python --force-reinstall --no-cache-dir
+  uv pip install llama-cpp-python==0.3.2 --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu/
   ```
 
+- **For GGUF models with GPU:** Install `llama-cpp-python` with CUDA support:
+  ```bash
+  CMAKE_ARGS="-DLLAMA_CUBLAS=on" uv pip install llama-cpp-python --force-reinstall --no-cache-dir
+  ```
+  
 - **For LMDeploy optimizations (GPU only):** Install `lmdeploy` for faster GPU inference:
   ```bash
   uv pip install lmdeploy
@@ -426,6 +431,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
