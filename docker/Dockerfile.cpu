@@ -30,6 +30,8 @@ FROM base AS dev
 # Chỉ copy định nghĩa dependencies để cài đặt
 COPY pyproject.toml requirements.txt ./
 RUN uv sync
+# Cài đặt llama-cpp-python bản CPU optimized (Pre-built wheel)
+RUN uv pip install llama-cpp-python==0.3.2 --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 # Command mặc định cho dev (có thể override)
 CMD ["/bin/bash"]
 
