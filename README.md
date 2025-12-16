@@ -123,7 +123,7 @@ uv sync
 
 ---
 
-## � Docker Deployment
+## 🐋 Docker Deployment
 
 For a quick start or production deployment without manually installing dependencies, use Docker.
 
@@ -449,6 +449,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
