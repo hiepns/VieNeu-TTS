@@ -129,14 +129,6 @@ For a quick start or production deployment without manually installing dependenc
 
 ### Quick Start
 
-Copy .env.example to .env
-
-```
-cp .env.example .env
-```
-
-Build and start container
-
 ```bash
 # Run with CPU
 docker compose --profile cpu up
@@ -147,7 +139,7 @@ docker compose --profile gpu up
 
 Access the Web UI at `http://localhost:7860`.
 
-For detailed deployment instructions, including production setup, see [docs/Deploy.md](docs/Deploy.md).
+For detailed deployment instructions, including production setup, see [Deploy.md](Deploy.md).
 
 ---
 
@@ -305,6 +297,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
