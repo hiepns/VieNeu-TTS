@@ -1,15 +1,17 @@
 x-base-config: &base-config
   volumes:
-    - ./:/workspace  # Hot-reload: mount local code
+    - ./:/workspace # Hot-reload: mount local code
     - huggingface_cache:/root/.cache/huggingface
     - ./output_audio:/workspace/output_audio
+    - uv_cache:/root/.cache/uv # Persist UV cache để tránh download lại packages
+    - pip_cache:/root/.cache/pip # Persist pip cache (cho các packages install bằng pip)
   env_file:
     - .env
   stdin_open: true # Support interactive shell
   tty: true
   ports:
-    - "${PORT}:7860"
-  command: ["uv", "run", "gradio_app.py", "--server-name", "0.0.0.0", "--server-port", "7860"]
+    - "${PORT}:${GRADIO_SERVER_PORT}"
+  command: ["uv", "run", "gradio_app.py"]
 
 services:
   # ========================================================
@@ -45,3 +47,5 @@ services:
 
 volumes:
   huggingface_cache:
+  uv_cache: # Cache directory cho uv (packages, wheels)
+  pip_cache: # Cache directory cho pip (nếu có packages install bằng pip)

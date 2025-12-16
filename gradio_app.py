@@ -756,4 +756,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
         )
 
 if __name__ == "__main__":
-    demo.queue().launch(server_name="127.0.0.1", server_port=7860)
+    # Cho phép override từ biến môi trường (hữu ích cho Docker)
+    server_name = os.getenv("GRADIO_SERVER_NAME", "127.0.0.1")
+    server_port = int(os.getenv("GRADIO_SERVER_PORT", "7860"))
+    demo.queue().launch(server_name=server_name, server_port=server_port)
