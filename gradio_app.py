@@ -151,9 +151,9 @@ def load_model(backbone_choice: str, codec_choice: str, device_choice: str,
                     lmdeploy_error_reason = f"{error_str}"
                 
                 yield (
-                    f"⚠️ LMDeploy Init Error: {lmdeploy_error_reason}. Đang sử dụng backend mặc định - tốc độ chậm hơn so với lmdeploy...",
+                    f"⚠️ LMDeploy Init Error: {lmdeploy_error_reason}. Đang loading model với backend mặc định - tốc độ chậm hơn so với lmdeploy...",
                     gr.update(interactive=False),
-                    gr.update(interactive=True)
+                    gr.update(interactive=False)
                 )
                 time.sleep(1)
                 use_lmdeploy = False
