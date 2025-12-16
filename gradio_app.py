@@ -1,4 +1,5 @@
 import gradio as gr
+print("⏳ Đang khởi động... Vui lòng chờ...")
 import soundfile as sf
 import tempfile
 import torch
@@ -6,12 +7,13 @@ from vieneu_tts import VieNeuTTS, FastVieNeuTTS
 import os
 import time
 import numpy as np
-import re
-from typing import Generator
+from typing import Generator, Optional, Tuple
 import queue
 import threading
 import yaml
 from utils.core_utils import split_text_into_chunks
+from functools import lru_cache
+import gc
 
 print("⏳ Đang khởi động VieNeu-TTS...")
 
@@ -44,7 +46,10 @@ current_codec = None
 model_loaded = False
 using_lmdeploy = False
 
-def should_use_lmdeploy(backbone_choice, device_choice):
+# Cache for reference texts
+_ref_text_cache = {}
+
+def should_use_lmdeploy(backbone_choice: str, device_choice: str) -> bool:
     """Determine if we should use LMDeploy backend."""
     if "GGUF" in backbone_choice:
         return False
@@ -58,9 +63,24 @@ def should_use_lmdeploy(backbone_choice, device_choice):
     
     return has_gpu
 
-def load_model(backbone_choice, codec_choice, device_choice, enable_triton, kv_quant, max_batch_size):
+@lru_cache(maxsize=32)
+def get_ref_text_cached(text_path: str) -> str:
+    """Cache reference text loading"""
+    with open(text_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+def cleanup_gpu_memory():
+    """Aggressively cleanup GPU memory"""
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+    gc.collect()
+
+def load_model(backbone_choice: str, codec_choice: str, device_choice: str, 
+               enable_triton: bool, max_batch_size: int):
     """Load model with optimizations and max batch size control"""
     global tts, current_backbone, current_codec, model_loaded, using_lmdeploy
+    lmdeploy_error_reason = None
     
     yield (
         "⏳ Đang tải model với tối ưu hóa... Lưu ý: Quá trình này sẽ tốn thời gian. Vui lòng kiên nhẫn.",
@@ -69,12 +89,18 @@ def load_model(backbone_choice, codec_choice, device_choice, enable_triton, kv_q
     )
     
     try:
+        # Cleanup before loading new model
+        if model_loaded and tts is not None:
+            del tts
+            cleanup_gpu_memory()
+        
         backbone_config = BACKBONE_CONFIGS[backbone_choice]
         codec_config = CODEC_CONFIGS[codec_choice]
         
         use_lmdeploy = should_use_lmdeploy(backbone_choice, device_choice)
         
         if use_lmdeploy:
+            lmdeploy_error_reason = None
             print(f"🚀 Using LMDeploy backend with optimizations")
             
             backbone_device = "cuda"
@@ -88,7 +114,6 @@ def load_model(backbone_choice, codec_choice, device_choice, enable_triton, kv_q
             print(f"   Backbone: {backbone_config['repo']} on {backbone_device}")
             print(f"   Codec: {codec_config['repo']} on {codec_device}")
             print(f"   Triton: {'Enabled' if enable_triton else 'Disabled'}")
-            print(f"   KV Quant: {kv_quant}")
             print(f"   Max Batch Size: {max_batch_size}")
             
             try:
@@ -100,9 +125,8 @@ def load_model(backbone_choice, codec_choice, device_choice, enable_triton, kv_q
                     memory_util=0.3,
                     tp=1,
                     enable_prefix_caching=True,
-                    quant_policy=kv_quant,
                     enable_triton=enable_triton,
-                    max_batch_size=max_batch_size,  # ✅ Pass max_batch_size
+                    max_batch_size=max_batch_size,
                 )
                 using_lmdeploy = True
                 
@@ -112,18 +136,26 @@ def load_model(backbone_choice, codec_choice, device_choice, enable_triton, kv_q
                     audio_path = voice_info["audio"]
                     text_path = voice_info["text"]
                     if os.path.exists(audio_path) and os.path.exists(text_path):
-                        with open(text_path, "r", encoding="utf-8") as f:
-                            ref_text = f.read()
+                        ref_text = get_ref_text_cached(text_path)
                         tts.get_cached_reference(voice_name, audio_path, ref_text)
                 print(f"   ✅ Cached {len(VOICE_SAMPLES)} voices")
                 
-            except ImportError:
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                
+                error_str = str(e)
+                if "$env:CUDA_PATH" in error_str:
+                    lmdeploy_error_reason = "Không tìm thấy biến môi trường CUDA_PATH. Vui lòng cài đặt NVIDIA GPU Computing Toolkit."
+                else:
+                    lmdeploy_error_reason = f"{error_str}"
+                
                 yield (
-                    "⚠️ LMDeploy không được cài đặt. Vui lòng cài lmdeploy (pip install lmdeploy) để tận dụng tối đa GPU. Fallback về HF Transformers...",
+                    f"⚠️ LMDeploy Init Error: {lmdeploy_error_reason}. Đang sử dụng backend mặc định - tốc độ chậm hơn so với lmdeploy...",
                     gr.update(interactive=False),
                     gr.update(interactive=True)
                 )
-                time.sleep(2)
+                time.sleep(1)
                 use_lmdeploy = False
                 using_lmdeploy = False
         
@@ -179,18 +211,25 @@ def load_model(backbone_choice, codec_choice, device_choice, enable_triton, kv_q
             opt_info = (
                 f"\n\n🔧 Tối ưu hóa:"
                 f"\n  • Triton: {'✅' if stats['triton_enabled'] else '❌'}"
-                f"\n  • KV Cache Quant: {stats['kv_quant']}-bit"
                 f"\n  • Max Batch Size: {max_batch_size}"
                 f"\n  • Reference Cache: {stats['cached_references']} voices"
                 f"\n  • Prefix Caching: ✅"
             )
         
+        warning_msg = ""
+        if lmdeploy_error_reason:
+             warning_msg = (
+                 f"\n\n⚠️ **Cảnh báo:** Không thể kích hoạt LMDeploy (Optimized Backend) do lỗi sau:\n"
+                 f"👉 {lmdeploy_error_reason}\n"
+                 f"💡 Hệ thống đã tự động chuyển về chế độ Standard (chậm hơn)."
+             )
+
         success_msg = (
             f"✅ Model đã tải thành công!\n\n"
             f"🔧 Backend: {backend_name}\n"
             f"🦜 Model Device: {device_info.upper()}\n"
             f"🎵 Codec Device: {codec_device.upper()}{preencoded_note}\n"
-            f"🌊 Streaming: {streaming_support}{opt_info}"
+            f"🌊 Streaming: {streaming_support}{opt_info}{warning_msg}"
         )
         
         yield (
@@ -204,12 +243,19 @@ def load_model(backbone_choice, codec_choice, device_choice, enable_triton, kv_q
         traceback.print_exc()
         model_loaded = False
         using_lmdeploy = False
-        
-        yield (
-            f"❌ Lỗi khi tải model: {str(e)}",
-            gr.update(interactive=False),
-            gr.update(interactive=True)
-        )
+
+        if "$env:CUDA_PATH" in str(e):
+            yield (
+                "❌ Lỗi khi tải model: Không tìm thấy biến môi trường CUDA_PATH. Vui lòng cài đặt NVIDIA GPU Computing Toolkit (https://developer.nvidia.com/cuda/toolkit)",
+                gr.update(interactive=False),
+                gr.update(interactive=True)
+            )
+        else: 
+            yield (
+                f"❌ Lỗi khi tải model: {str(e)}",
+                gr.update(interactive=False),
+                gr.update(interactive=True)
+            )
 
 
 # --- 2. DATA & HELPERS ---
@@ -232,14 +278,14 @@ def update_voice_dropdown(backbone_choice: str, current_voice: str):
     return gr.update(choices=options, value=new_value)
 
 # --- 3. CORE LOGIC FUNCTIONS ---
-def load_reference_info(voice_choice):
+def load_reference_info(voice_choice: str) -> Tuple[Optional[str], str]:
+    """Load reference audio and text with caching"""
     if voice_choice in VOICE_SAMPLES:
         audio_path = VOICE_SAMPLES[voice_choice]["audio"]
         text_path = VOICE_SAMPLES[voice_choice]["text"]
         try:
             if os.path.exists(text_path):
-                with open(text_path, "r", encoding="utf-8") as f:
-                    ref_text = f.read()
+                ref_text = get_ref_text_cached(text_path)
                 return audio_path, ref_text
             else:
                 return audio_path, "⚠️ Không tìm thấy file text mẫu."
@@ -247,7 +293,8 @@ def load_reference_info(voice_choice):
             return None, f"❌ Lỗi: {str(e)}"
     return None, ""
 
-def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, generation_mode, use_batch):
+def synthesize_speech(text: str, voice_choice: str, custom_audio, custom_text: str, 
+                     mode_tab: str, generation_mode: str, use_batch: bool):
     """Synthesis with optimization support and max batch size control"""
     global tts, current_backbone, current_codec, model_loaded, using_lmdeploy
     
@@ -277,22 +324,21 @@ def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, g
             yield None, "⚠️ Vui lòng chọn giọng mẫu."
             return
         ref_audio_path = VOICE_SAMPLES[voice_choice]["audio"]
-        ref_text_path = VOICE_SAMPLES[voice_choice]["text"]
+        text_path = VOICE_SAMPLES[voice_choice]["text"]
         ref_codes_path = VOICE_SAMPLES[voice_choice]["codes"]
         
         if not os.path.exists(ref_audio_path):
             yield None, "❌ Không tìm thấy file audio mẫu."
             return
         
-        with open(ref_text_path, "r", encoding="utf-8") as f:
-            ref_text_raw = f.read()
+        ref_text_raw = get_ref_text_cached(text_path)
     
     yield None, "📄 Đang xử lý Reference..."
     
     # Encode or get cached reference
     try:
         if use_preencoded and ref_codes_path and os.path.exists(ref_codes_path):
-            ref_codes = torch.load(ref_codes_path, map_location="cpu")
+            ref_codes = torch.load(ref_codes_path, map_location="cpu", weights_only=True)
         else:
             # Use cached reference if available (LMDeploy only)
             if using_lmdeploy and hasattr(tts, 'get_cached_reference') and mode_tab == "preset_mode":
@@ -315,10 +361,9 @@ def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, g
         batch_info = " (Batch Mode)" if use_batch and using_lmdeploy and total_chunks > 1 else ""
         
         # Show batch size info
+        batch_size_info = ""
         if use_batch and using_lmdeploy and hasattr(tts, 'max_batch_size'):
             batch_size_info = f" [Max batch: {tts.max_batch_size}]"
-        else:
-            batch_size_info = ""
         
         yield None, f"🚀 Bắt đầu tổng hợp {backend_name}{batch_info}{batch_size_info} ({total_chunks} đoạn)..."
         
@@ -376,22 +421,22 @@ def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, g
             # Cleanup memory
             if using_lmdeploy and hasattr(tts, 'cleanup_memory'):
                 tts.cleanup_memory()
+            cleanup_gpu_memory()
             
         except torch.cuda.OutOfMemoryError as e:
+            cleanup_gpu_memory()
             yield None, (
                 f"❌ GPU hết VRAM! Hãy thử:\n"
                 f"• Giảm Max Batch Size (hiện tại: {tts.max_batch_size if hasattr(tts, 'max_batch_size') else 'N/A'})\n"
-                f"• Bật KV Cache Quantization (8-bit)\n"
                 f"• Giảm độ dài văn bản\n\n"
                 f"Chi tiết: {str(e)}"
             )
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
             return
             
         except Exception as e:
             import traceback
             traceback.print_exc()
+            cleanup_gpu_memory()
             yield None, f"❌ Lỗi Standard Mode: {str(e)}"
             return
     
@@ -506,10 +551,11 @@ def synthesize_speech(text, voice_choice, custom_audio, custom_text, mode_tab, g
             # Cleanup memory
             if using_lmdeploy and hasattr(tts, 'cleanup_memory'):
                 tts.cleanup_memory()
+            cleanup_gpu_memory()
 
 
 # --- 4. UI SETUP ---
-theme = gr.themes.Ocean(
+theme = gr.themes.Soft(
     primary_hue="indigo",
     secondary_hue="cyan",
     neutral_hue="slate",
@@ -527,11 +573,12 @@ css = """
     padding: 25px;
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     border-radius: 12px;
-    color: white;
+    color: white !important;
 }
 .header-title {
     font-size: 2.5rem;
     font-weight: 800;
+    color: white !important;
 }
 .gradient-text {
     background: -webkit-linear-gradient(45deg, #60A5FA, #22D3EE);
@@ -555,13 +602,20 @@ css = """
     gap: 15px;
     font-size: 0.9rem;
     text-align: center;
+    color: white !important;
 }
 .model-card-item {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    color: #e2e8f0;
+    color: white !important;
+}
+.model-card-item strong {
+    color: white !important;
+}
+.model-card-item span {
+    color: white !important;
 }
 .model-card-link {
     color: #60A5FA;
@@ -618,7 +672,6 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
             
             with gr.Row():
                 enable_triton = gr.Checkbox(value=True, label="⚡ Enable Triton Compilation")
-                kv_quant = gr.Radio([0, 8], value=8, label="🔧 KV Cache Quantization", info="8=int8 (save VRAM), 0=disabled")
                 max_batch_size = gr.Slider(
                     minimum=1, 
                     maximum=16, 
@@ -676,13 +729,12 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                 audio_output = gr.Audio(
                     label="Kết quả",
                     type="filepath",
-                    autoplay=True,
-                    show_download_button=True
+                    autoplay=True
                 )
                 status_output = gr.Textbox(label="Trạng thái", elem_classes="status-box")
         
         # --- EVENT HANDLERS ---
-        def update_info(backbone):
+        def update_info(backbone: str) -> str:
             return f"Streaming: {'✅' if BACKBONE_CONFIGS[backbone]['supports_streaming'] else '❌'}"
         
         backbone_select.change(update_info, backbone_select, model_status)
@@ -693,7 +745,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
         
         btn_load.click(
             fn=load_model,
-            inputs=[backbone_select, codec_select, device_choice, enable_triton, kv_quant, max_batch_size],
+            inputs=[backbone_select, codec_select, device_choice, enable_triton, max_batch_size],
             outputs=[model_status, btn_generate, btn_load]
         )
         
@@ -704,4 +756,4 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
         )
 
 if __name__ == "__main__":
-    demo.queue().launch(server_name="0.0.0.0", server_port=7860)
+    demo.queue().launch(server_name="127.0.0.1", server_port=7860)
