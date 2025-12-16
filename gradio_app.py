@@ -51,7 +51,7 @@ _ref_text_cache = {}
 
 def should_use_lmdeploy(backbone_choice: str, device_choice: str) -> bool:
     """Determine if we should use LMDeploy backend."""
-    if "GGUF" in backbone_choice:
+    if "gguf" in backbone_choice.lower():
         return False
     
     if device_choice == "Auto":
@@ -163,7 +163,7 @@ def load_model(backbone_choice: str, codec_choice: str, device_choice: str,
             print(f"📦 Using original backend")
             
             if device_choice == "Auto":
-                if "GGUF" in backbone_choice:
+                if "gguf" in backbone_choice.lower():
                     backbone_device = "gpu" if torch.cuda.is_available() else "cpu"
                 else:
                     backbone_device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -179,7 +179,7 @@ def load_model(backbone_choice: str, codec_choice: str, device_choice: str,
                 if "ONNX" in codec_choice:
                     codec_device = "cpu"
             
-            if "GGUF" in backbone_choice and backbone_device == "cuda":
+            if "gguf" in backbone_choice.lower() and backbone_device == "cuda":
                 backbone_device = "gpu"
             
             print(f"📦 Loading model...")
