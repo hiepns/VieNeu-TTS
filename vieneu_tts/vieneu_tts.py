@@ -425,7 +425,7 @@ class FastVieNeuTTS:
         memory_util=0.3,
         tp=1,
         enable_prefix_caching=True,
-        quant_policy=8,
+        quant_policy=0,
         enable_triton=True,
         max_batch_size=8,
     ):
@@ -503,11 +503,9 @@ class FastVieNeuTTS:
             top_p=0.95,
             top_k=50,
             temperature=1.0,
-            max_new_tokens=1024,
-            repetition_penalty=1.0,
+            max_new_tokens=2048,
             do_sample=True,
             min_new_tokens=40,
-            min_p=0.1,
         )
         
         print(f"   LMDeploy TurbomindEngine initialized")
