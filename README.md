@@ -180,25 +180,6 @@ VieNeu-TTS/
 └── uv.lock                    # UV lock file for dependency management
 ```
 
-### Key Components
-
-- **`gradio_app.py`**: Full-featured web interface with support for:
-  - Multiple model variants (PyTorch, GGUF Q4/Q8)
-  - LMDeploy backend with optimizations (Triton, KV cache quantization, batch processing)
-  - Batch processing for faster inference on GPU
-  - Custom voice uploads
-  - Text chunking for long-form synthesis
-  
-- **`vieneu_tts/vieneu_tts.py`**: Core implementation providing:
-  - `VieNeuTTS`: Standard implementation for GPU/CPU
-  - `FastVieNeuTTS`: Optimized implementation with LMDeploy backend for GPU acceleration
-  
-- **`config.yaml`**: Centralized configuration for:
-  - Backbone models (PyTorch, GGUF variants)
-  - Codec configurations (Standard, ONNX)
-  - Voice samples with paths to audio, text, and pre-encoded codes
-  - Text processing settings (chunk size, streaming limits)
-
 ---
 
 ## 🚀 Quickstart
@@ -244,139 +225,6 @@ wav = tts.infer(text, ref_codes, ref_text)
 # Save audio
 sf.write("output.wav", wav, 24000)
 ```
-
----
-
-## �💻 Using GGUF Q4 and Q8 on CPU
-
-GGUF models are optimized for CPU, providing faster speed and lower memory usage than the original PyTorch model.
-
-### Option 1: Gradio Web UI
-
-1. **Start the Gradio app:**
-   ```bash
-   uv run gradio_app.py
-   ```
-
-2. **Pick models in the UI:**
-   - **Backbone**: Choose `VieNeu-TTS-q4-gguf` (fastest) or `VieNeu-TTS-q8-gguf` (higher quality)
-   - **Codec**: Choose `NeuCodec ONNX (Fast CPU)` to maximize CPU speed
-   - **Device**: Choose `CPU`
-
-3. **Click "🔄 Load Model"** and wait for the first download
-
-4. **Use as normal** — the model will automatically run on CPU
-
-### Option 2: Python code
-
-#### Use GGUF Q4 (lightest, fastest)
-
-```python
-from vieneu_tts import VieNeuTTS
-import soundfile as sf
-import torch
-
-# Initialize Q4 model for CPU
-tts = VieNeuTTS(
-    backbone_repo="pnnbao-ump/VieNeu-TTS-q4-gguf",
-    backbone_device="cpu",  # Use CPU
-    codec_repo="neuphonic/neucodec-onnx-decoder",  # ONNX codec for CPU
-    codec_device="cpu"
-)
-
-# Load reference codes (pre-encoded for ONNX codec)
-ref_codes = torch.load("./sample/Vĩnh (nam miền Nam).pt", map_location="cpu")
-with open("./sample/Vĩnh (nam miền Nam).txt", "r", encoding="utf-8") as f:
-    ref_text = f.read()
-
-# Synthesize speech
-text = "Đây là ví dụ sử dụng mô hình Q4 trên CPU."
-wav = tts.infer(text, ref_codes, ref_text)
-
-# Save audio file
-sf.write("output_q4.wav", wav, 24000)
-print("✅ Created output_q4.wav")
-```
-
-#### Use GGUF Q8 (better quality)
-
-```python
-from vieneu_tts import VieNeuTTS
-import soundfile as sf
-import torch
-
-# Initialize Q8 model for CPU
-tts = VieNeuTTS(
-    backbone_repo="pnnbao-ump/VieNeu-TTS-q8-gguf",
-    backbone_device="cpu",
-    codec_repo="neuphonic/neucodec-onnx-decoder",
-    codec_device="cpu"
-)
-
-# Load reference
-ref_codes = torch.load("./sample/Vĩnh (nam miền Nam).pt", map_location="cpu")
-with open("./sample/Vĩnh (nam miền Nam).txt", "r", encoding="utf-8") as f:
-    ref_text = f.read()
-
-# Synthesize
-text = "Đây là ví dụ sử dụng mô hình Q8 trên CPU với chất lượng tốt hơn."
-wav = tts.infer(text, ref_codes, ref_text)
-
-sf.write("output_q8.wav", wav, 24000)
-print("✅ Created output_q8.wav")
-```
-
-### Streaming with GGUF models
-
-GGUF models support streaming inference, letting you listen while audio is being generated.
-
-### Important notes for GGUF on CPU
-
-1. **Pre-encoded codes**: When using `neuphonic/neucodec-onnx-decoder`, use `.pt` files (pre-encoded codes) instead of encoding from audio. `.pt` files are available in `sample/`.
-
-2. **If you do not have a .pt file**: You can encode from audio using the PyTorch codec first:
-   ```python
-   # Temporarily use the PyTorch codec to encode
-   tts_temp = VieNeuTTS(
-       backbone_repo="pnnbao-ump/VieNeu-TTS-q4-gguf",
-       backbone_device="cpu",
-       codec_repo="neuphonic/neucodec",  # PyTorch codec
-       codec_device="cpu"
-   )
-   ref_codes = tts_temp.encode_reference("./sample/Vĩnh (nam miền Nam).wav")
-   torch.save(ref_codes, "./sample/Vĩnh (nam miền Nam).pt")
-   ```
-
-3. **Optimize CPU performance**:
-   - Use Q4 for maximum speed
-   - Use the ONNX codec for faster decoding
-   - Reduce `max_chars_per_chunk` if you hit memory limits
-
-4. **GPU acceleration (optional)**: If you have an NVIDIA GPU and installed `llama-cpp-python` with CUDA, set `backbone_device="gpu"` to speed things up.
-
----
-
-## 🔈 Reference Voices (`sample/`)
-
-| File                    | Gender | Accent | Description        |
-|-------------------------|--------|--------|--------------------|
-| Bình (nam miền Bắc)     | Male   | North  | Male voice, North accent |
-| Tuyên (nam miền Bắc)    | Male   | North  | Male voice, North accent |
-| Nguyên (nam miền Nam)   | Male   | South  | Male voice, South accent |
-| Sơn (nam miền Nam)      | Male   | South  | Male voice, South accent |
-| Vĩnh (nam miền Nam)     | Male   | South  | Male voice, South accent |
-| Hương (nữ miền Bắc)     | Female | North  | Female voice, North accent |
-| Ly (nữ miền Bắc)        | Female | North  | Female voice, North accent |
-| Ngọc (nữ miền Bắc)      | Female | North  | Female voice, North accent |
-| Đoan (nữ miền Nam)      | Female | South  | Female voice, South accent |
-| Dung (nữ miền Nam)      | Female | South  | Female voice, South accent |
-
-Each reference voice includes:
-- `.wav` - Audio file
-- `.txt` - Transcript file
-- `.pt` - Pre-encoded codes (for ONNX codec)
-
-**Note:** GGUF models hiện tại chỉ hỗ trợ 4 giọng: Vĩnh, Bình, Ngọc, và Dung.
 
 ---
 
@@ -449,6 +297,7 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
 
 
 
