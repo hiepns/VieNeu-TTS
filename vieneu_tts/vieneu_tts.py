@@ -131,7 +131,7 @@ class VieNeuTTS:
                 raise ImportError(
                     "Failed to import `llama_cpp`. "
                     "Please install it with:\n"
-                    "    pip install llama-cpp-python"
+                    "    pip install llama-cpp-python or uv pip install llama-cpp-python"
                 ) from e
             self.backbone = Llama.from_pretrained(
                 repo_id=backbone_repo,
@@ -486,7 +486,7 @@ class FastVieNeuTTS:
         except ImportError as e:
             raise ImportError(
                 "Failed to import `lmdeploy`. "
-                "Please install it with: pip install lmdeploy"
+                "Please install it with: pip install lmdeploy or uv pip install lmdeploy"
             ) from e
         
         backend_config = TurbomindEngineConfig(
