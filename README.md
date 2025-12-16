@@ -218,7 +218,7 @@ with open("./sample/Vĩnh (nam miền Nam).txt", "r", encoding="utf-8") as f:
     ref_text = f.read()
 
 # Generate speech
-text = "Hello, this is an example of Vietnamese speech synthesis."
+text = "Xin chào, đây là một ví dụ về tổng hợp giọng nói tiếng Việt."
 wav = tts.infer(text, ref_codes, ref_text)
 
 # Save audio
@@ -270,7 +270,7 @@ with open("./sample/Vĩnh (nam miền Nam).txt", "r", encoding="utf-8") as f:
     ref_text = f.read()
 
 # Synthesize speech
-text = "This is an example using the Q4 model on CPU."
+text = "Đây là ví dụ sử dụng mô hình Q4 trên CPU."
 wav = tts.infer(text, ref_codes, ref_text)
 
 # Save audio file
@@ -299,7 +299,7 @@ with open("./sample/Vĩnh (nam miền Nam).txt", "r", encoding="utf-8") as f:
     ref_text = f.read()
 
 # Synthesize
-text = "This is an example using the Q8 model on CPU with better quality."
+text = "Đây là ví dụ sử dụng mô hình Q8 trên CPU với chất lượng tốt hơn."
 wav = tts.infer(text, ref_codes, ref_text)
 
 sf.write("output_q8.wav", wav, 24000)
@@ -429,12 +429,3 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
-
-
-
-
-
-
-
-
-
