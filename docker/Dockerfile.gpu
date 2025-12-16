@@ -40,12 +40,20 @@ WORKDIR /workspace
 FROM base AS dev
 COPY pyproject.toml requirements.txt ./
 RUN uv sync
+
+# Install optimized GPU dependencies (LMDeploy, Triton)
+RUN uv pip install lmdeploy triton
+
 CMD ["/bin/bash"]
 
 # --- Stage: Production ---
 FROM base AS prod
 COPY . .
 RUN uv sync --no-dev --frozen
+
+# Install optimized GPU dependencies (LMDeploy, Triton)
+RUN uv pip install lmdeploy triton
+
 EXPOSE 7860
 CMD ["uv", "run", "gradio_app.py", "--server-name", "0.0.0.0", "--server-port", "7860"]
 
