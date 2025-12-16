@@ -1,8 +1,8 @@
 x-base-config: &base-config
   volumes:
-    - /mnt/d/HPS/VieNeu-TTS:/workspace # Hot-reload: mount local code
+    - ./:/workspace # Hot-reload: mount local code
     - huggingface_cache:/root/.cache/huggingface
-    - /mnt/d/HPS/VieNeu-TTS/output_audio:/workspace/output_audio
+    - ./output_audio:/workspace/output_audio
     - uv_cache:/root/.cache/uv # Persist UV cache để tránh download lại packages
     - pip_cache:/root/.cache/pip # Persist pip cache (cho các packages install bằng pip)
   env_file:
