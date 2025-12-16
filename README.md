@@ -123,6 +123,26 @@ uv sync
 
 ---
 
+## � Docker Deployment
+
+For a quick start or production deployment without manually installing dependencies, use Docker.
+
+### Quick Start
+
+```bash
+# Run with CPU
+docker compose --profile cpu up
+
+# Run with GPU (requires NVIDIA Container Toolkit)
+docker compose --profile gpu up
+```
+
+Access the Web UI at `http://localhost:7860`.
+
+For detailed deployment instructions, including production setup, see [Deploy.md](Deploy.md).
+
+---
+
 ## 📦 Project Structure
 
 ```
@@ -227,7 +247,7 @@ sf.write("output.wav", wav, 24000)
 
 ---
 
-## 💻 Using GGUF Q4 and Q8 on CPU
+## �💻 Using GGUF Q4 and Q8 on CPU
 
 GGUF models are optimized for CPU, providing faster speed and lower memory usage than the original PyTorch model.
 
@@ -429,3 +449,6 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
+
+
+
