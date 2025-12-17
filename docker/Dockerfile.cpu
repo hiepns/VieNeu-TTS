@@ -28,10 +28,8 @@ WORKDIR /workspace
 FROM base AS dev
 # Trong môi trường dev, chúng ta sẽ mount code từ host
 # Chỉ copy định nghĩa dependencies để cài đặt
-COPY pyproject.toml requirements.txt ./
+COPY pyproject.toml.cpu ./pyproject.toml
 RUN uv sync
-# Cài đặt llama-cpp-python bản CPU optimized (Pre-built wheel)
-RUN uv pip install llama-cpp-python==0.3.2 --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 # Command mặc định cho dev (có thể override)
 CMD ["/bin/bash"]
 
@@ -39,11 +37,11 @@ CMD ["/bin/bash"]
 FROM base AS prod
 # Copy toàn bộ source code
 COPY . .
+# Copy CPU-specific config
+RUN rm -f pyproject.toml
+COPY pyproject.toml.cpu pyproject.toml
 # Cài đặt dependencies (không bao gồm dev deps)
-RUN uv sync --no-dev --frozen
-
-# Cài đặt llama-cpp-python bản CPU optimized
-RUN uv pip install llama-cpp-python==0.3.2 --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+RUN uv sync --no-dev
 
 # Expose port
 EXPOSE 7860
