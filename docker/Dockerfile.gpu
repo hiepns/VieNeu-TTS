@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04 AS base
+FROM nvidia/cuda:13.0.0-runtime-ubuntu24.04 AS base
 
 # Thiết lập biến môi trường
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -38,14 +38,15 @@ WORKDIR /workspace
 
 # --- Stage: Development ---
 FROM base AS dev
-COPY pyproject.toml requirements.txt ./
-RUN uv sync
+COPY pyproject.toml uv.lock requirements.txt ./
+RUN uv sync --frozen
 
 CMD ["/bin/bash"]
 
 # --- Stage: Production ---
 FROM base AS prod
 COPY . .
+# Enable frozen sync as we have the correct uv.lock
 RUN uv sync --no-dev --frozen
 
 EXPOSE 7860

@@ -29,7 +29,8 @@ FROM base AS dev
 # Trong môi trường dev, chúng ta sẽ mount code từ host
 # Chỉ copy định nghĩa dependencies để cài đặt
 COPY pyproject.toml.cpu ./pyproject.toml
-RUN uv sync
+COPY uv.lock.cpu ./uv.lock
+RUN uv sync --frozen
 # Command mặc định cho dev (có thể override)
 CMD ["python", "gradio_app.py"]
 
@@ -40,6 +41,8 @@ COPY . .
 # Copy CPU-specific config
 RUN rm -f pyproject.toml
 COPY pyproject.toml.cpu pyproject.toml
+RUN rm -f uv.lock
+COPY uv.lock.cpu uv.lock
 # Cài đặt dependencies (không bao gồm dev deps)
 RUN uv sync --no-dev --frozen
 
