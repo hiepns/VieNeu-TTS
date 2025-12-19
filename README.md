@@ -97,12 +97,17 @@ paru -S aur/espeak-ng
 Designed for NVIDIA 30xx/40xx/50xx series. Includes `lmdeploy` and `triton` for maximum performance.
 
 > [!IMPORTANT]
-> **Update your NVIDIA Drivers!**
+> **Update your NVIDIA Drivers & Install CUDA Toolkit!**
 > This project uses **CUDA 12.8**. Please ensure your NVIDIA driver is up-to-date (support CUDA 12.8 or newer) to avoid compatibility issues, especially on RTX 30 series.
+>
+> To use `lmdeploy`, you **MUST** install the **NVIDIA GPU Computing Toolkit**: [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads).
 
 ```bash
 uv sync
+uv run gradio_app.py
 ```
+
+Then open `http://127.0.0.1:7860`
 
 **Option B: For CPU Users**
 Lightweight installation with `llama-cpp-python` (CPU) and standard PyTorch (CPU).
@@ -120,7 +125,10 @@ Lightweight installation with `llama-cpp-python` (CPU) and standard PyTorch (CPU
 3. Install dependencies:
    ```bash
    uv sync
+   uv run gradio_app.py
    ```
+
+   Then open `http://127.0.0.1:7860`
 
 **Optional dependencies:**
 
@@ -194,52 +202,6 @@ VieNeu-TTS/
 ├── requirements.txt           # Basic dependencies (legacy)
 ├── pyproject.toml             # Project configuration with full dependencies (UV)
 └── uv.lock                    # UV lock file for dependency management
-```
-
----
-
-## 🚀 Quickstart
-
-### Gradio web demo
-
-```bash
-uv run gradio_app.py
-```
-
-Then open `http://127.0.0.1:7860` to:
-
-- Choose from multiple model variants (PyTorch, GGUF Q4/Q8)
-- Pick one of ten reference voices (5 male, 5 female; North and South accents)
-- Upload your own reference audio + transcript
-- Enter text up to 3000 characters (with chunking support)
-- Preview or download the synthesized audio
-
-### Basic Python usage
-
-```python
-from vieneu_tts import VieNeuTTS
-import soundfile as sf
-
-# Initialize with GGUF Q4 model for CPU
-tts = VieNeuTTS(
-    backbone_repo="pnnbao-ump/VieNeu-TTS-q4-gguf",
-    backbone_device="cpu",
-    codec_repo="neuphonic/neucodec-onnx-decoder",
-    codec_device="cpu"
-)
-
-# Load reference (using pre-encoded codes for ONNX codec)
-import torch
-ref_codes = torch.load("./sample/Vĩnh (nam miền Nam).pt", map_location="cpu")
-with open("./sample/Vĩnh (nam miền Nam).txt", "r", encoding="utf-8") as f:
-    ref_text = f.read()
-
-# Generate speech
-text = "Xin chào, đây là một ví dụ về tổng hợp giọng nói tiếng Việt."
-wav = tts.infer(text, ref_codes, ref_text)
-
-# Save audio
-sf.write("output.wav", wav, 24000)
 ```
 
 ---
