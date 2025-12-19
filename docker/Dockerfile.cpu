@@ -31,7 +31,7 @@ FROM base AS dev
 COPY pyproject.toml.cpu ./pyproject.toml
 RUN uv sync
 # Command mặc định cho dev (có thể override)
-CMD ["/bin/bash"]
+CMD ["python", "gradio_app.py"]
 
 # --- Stage: Production ---
 FROM base AS prod
@@ -41,7 +41,7 @@ COPY . .
 RUN rm -f pyproject.toml
 COPY pyproject.toml.cpu pyproject.toml
 # Cài đặt dependencies (không bao gồm dev deps)
-RUN uv sync --no-dev
+RUN uv sync --no-dev --frozen
 
 # Expose port
 EXPOSE 7860

@@ -1,3 +1,4 @@
+
 [tool.uv]
 index-strategy = "unsafe-best-match"
 
@@ -9,11 +10,16 @@ explicit = true
 [tool.uv.sources]
 torch = { index = "pytorch-cpu" }
 torchaudio = { index = "pytorch-cpu" }
+llama-cpp-python = { index = "llama-cpp-python-whl", marker = "sys_platform == 'win32'" }
+
+[[tool.uv.index]]
+name = "llama-cpp-python-whl"
+url = "https://abetlen.github.io/llama-cpp-python/whl/cpu"
 
 [project]
 name = "VieNeu-TTS"
 version = "0.1.0"
-description = "VieNeu-TTS - TTS for Vietnamese language"
+description = "Advanced on-device Vietnamese TTS with instant voice cloning"
 readme = "README.md"
 requires-python = "==3.12.*"
 dependencies = [
