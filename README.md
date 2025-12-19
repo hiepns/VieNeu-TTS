@@ -97,8 +97,10 @@ paru -S aur/espeak-ng
 Designed for NVIDIA 30xx/40xx/50xx series. Includes `lmdeploy` and `triton` for maximum performance.
 
 > [!IMPORTANT]
-> **Update your NVIDIA Drivers!**
+> **Update your NVIDIA Drivers & Install CUDA Toolkit!**
 > This project uses **CUDA 12.8**. Please ensure your NVIDIA driver is up-to-date (support CUDA 12.8 or newer) to avoid compatibility issues, especially on RTX 30 series.
+>
+> To use `lmdeploy`, you **MUST** install the **NVIDIA GPU Computing Toolkit**: [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads).
 
 ```bash
 uv sync
