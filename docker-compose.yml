@@ -25,7 +25,6 @@ services:
       dockerfile: docker/Dockerfile.cpu
       target: dev
     container_name: vieneu-tts-cpu-dev
-    command: [ "python", "gradio_app.py" ]
 
   # ========================================================
   # GPU Profile

@@ -1,14 +1,21 @@
 [tool.uv]
 index-strategy = "unsafe-best-match"
+required-environments = [
+    "sys_platform == 'win32' and platform_machine == 'AMD64'",
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
+override-dependencies = [
+    "nvidia-nccl-cu12; sys_platform != 'win32'",
+]
 
 [[tool.uv.index]]
 name = "pytorch"
-url = "https://download.pytorch.org/whl/cu118"
+url = "https://download.pytorch.org/whl/cu128"
 
 [project]
 name = "VieNeu-TTS"
 version = "0.1.0"
-description = "VieNeu-TTS - TTS for Vietnamese language"
+description = "Advanced on-device Vietnamese TTS with instant voice cloning"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -16,12 +23,14 @@ dependencies = [
     "torch",
     "torchvision",
     "torchaudio",
-    "huggingface-hub[cli]>=0.36.0",
     "neucodec>=0.0.4",
     "librosa>=0.11.0",
     "gradio>=5.49.1",
     "onnxruntime>=1.23.2",
     "datasets>=3.2.0",
+    "lmdeploy",
+    "triton-windows; sys_platform == 'win32'",
+    "triton; sys_platform != 'win32'",
 ]
 
 [tool.uv.sources]

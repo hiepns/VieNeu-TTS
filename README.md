@@ -93,33 +93,41 @@ paru -S aur/espeak-ng
 
 ### 3. Install Python dependencies (Python ≥ 3.12)
 
+**Option A: For GPU Users (Recommended)**
+Designed for NVIDIA 30xx/40xx/50xx series. Includes `lmdeploy` and `triton` for maximum performance.
+
+> [!IMPORTANT]
+> **Update your NVIDIA Drivers!**
+> This project uses **CUDA 12.8**. Please ensure your NVIDIA driver is up-to-date (support CUDA 12.8 or newer) to avoid compatibility issues, especially on RTX 30 series.
+
 ```bash
 uv sync
 ```
 
+**Option B: For CPU Users**
+Lightweight installation with `llama-cpp-python` (CPU) and standard PyTorch (CPU).
+
+1. Delete the existing configuration:
+   ```bash
+   rm pyproject.toml  # Linux/macOS
+   # del pyproject.toml (Windows CMD)
+   ```
+2. Activate CPU configuration:
+   ```bash
+   mv pyproject.toml.cpu pyproject.toml # Linux/macOS
+   # ren pyproject.toml.cpu pyproject.toml (Windows CMD)
+   ```
+3. Install dependencies:
+   ```bash
+   uv sync
+   ```
+
 **Optional dependencies:**
 
-- **For GGUF models with CPU:** Install `llama-cpp-python` with CPU support:
-  ```bash
-  uv pip install llama-cpp-python
-  ```
-
-- **For GGUF models with GPU:** Install `llama-cpp-python` with CUDA support:
+- **For GGUF models (GPU):**
   ```bash
   CMAKE_ARGS="-DLLAMA_CUBLAS=on" uv pip install llama-cpp-python --force-reinstall --no-cache-dir
   ```
-  
-- **For LMDeploy optimizations (GPU only):** Install `lmdeploy` for faster GPU inference:
-  ```bash
-  uv pip install lmdeploy
-  uv pip install triton
-  ```
-  For Windows:
-  ```bash
-  uv pip install lmdeploy
-  uv pip install triton-windows 
-  ```
-  This enables batch processing, Triton compilation, and KV cache quantization in the Gradio app.
 
 ---
 
