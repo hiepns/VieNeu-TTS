@@ -104,10 +104,7 @@ Designed for NVIDIA 30xx/40xx/50xx series. Includes `lmdeploy` and `triton` for 
 
 ```bash
 uv sync
-uv run gradio_app.py
 ```
-
-Then open `http://127.0.0.1:7860`
 
 **Option B: For CPU Users**
 Lightweight installation with `llama-cpp-python` (CPU) and standard PyTorch (CPU).
@@ -125,10 +122,17 @@ Lightweight installation with `llama-cpp-python` (CPU) and standard PyTorch (CPU
 3. Install dependencies:
    ```bash
    uv sync
-   uv run gradio_app.py
    ```
 
-   Then open `http://127.0.0.1:7860`
+### 4. Run the Application
+
+Start the Gradio interface:
+
+```bash
+uv run gradio_app.py
+```
+
+Then access the Web UI at `http://127.0.0.1:7860`.
 
 **Optional dependencies:**
 
