@@ -30,7 +30,7 @@ FROM base AS dev
 # Chỉ copy định nghĩa dependencies để cài đặt
 COPY pyproject.toml.cpu ./pyproject.toml
 COPY uv.lock.cpu ./uv.lock
-RUN uv sync --frozen
+RUN uv sync
 # Command mặc định cho dev (có thể override)
 CMD ["python", "gradio_app.py"]
 
@@ -44,7 +44,7 @@ COPY pyproject.toml.cpu pyproject.toml
 RUN rm -f uv.lock
 COPY uv.lock.cpu uv.lock
 # Cài đặt dependencies (không bao gồm dev deps)
-RUN uv sync --no-dev --frozen
+RUN uv sync --no-dev
 
 # Expose port
 EXPOSE 7860

@@ -39,7 +39,7 @@ WORKDIR /workspace
 # --- Stage: Development ---
 FROM base AS dev
 COPY pyproject.toml uv.lock requirements.txt ./
-RUN uv sync --frozen
+RUN uv sync
 
 CMD ["/bin/bash"]
 
@@ -47,7 +47,7 @@ CMD ["/bin/bash"]
 FROM base AS prod
 COPY . .
 # Enable frozen sync as we have the correct uv.lock
-RUN uv sync --no-dev --frozen
+RUN uv sync --no-dev
 
 EXPOSE 7860
 CMD ["uv", "run", "gradio_app.py", "--server-name", "0.0.0.0", "--server-port", "7860"]
