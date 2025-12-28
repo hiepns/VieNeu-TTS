@@ -1,24 +1,24 @@
-
 [tool.uv]
 index-strategy = "unsafe-best-match"
 required-environments = [
     "sys_platform == 'win32' and platform_machine == 'AMD64'",
     "sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
 ]
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
-[tool.uv.sources]
-torch = { index = "pytorch-cpu" }
-torchaudio = { index = "pytorch-cpu" }
-llama-cpp-python = { index = "llama-cpp-python-whl", marker = "sys_platform == 'win32'" }
-
 [[tool.uv.index]]
 name = "llama-cpp-python-whl"
 url = "https://abetlen.github.io/llama-cpp-python/whl/cpu"
+explicit = true
 
 [project]
 name = "VieNeu-TTS"
@@ -36,4 +36,18 @@ dependencies = [
     "onnxruntime>=1.23.2",
     "datasets>=3.2.0",
     "llama-cpp-python>=0.3.2",
+]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", marker = "sys_platform != 'darwin'" },
+    { index = "pypi", marker = "sys_platform == 'darwin'" }
+]
+torchaudio = [
+    { index = "pytorch-cpu", marker = "sys_platform != 'darwin'" },
+    { index = "pypi", marker = "sys_platform == 'darwin'" }
+]
+llama-cpp-python = [
+    { index = "llama-cpp-python-whl", marker = "sys_platform == 'win32'" },
+    { index = "pypi", marker = "sys_platform != 'win32'" }
 ]

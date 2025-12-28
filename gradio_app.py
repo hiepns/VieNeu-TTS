@@ -5,6 +5,7 @@ import tempfile
 import torch
 from vieneu_tts import VieNeuTTS, FastVieNeuTTS
 import os
+import sys
 import time
 import numpy as np
 from typing import Generator, Optional, Tuple
@@ -49,18 +50,37 @@ using_lmdeploy = False
 # Cache for reference texts
 _ref_text_cache = {}
 
+def get_available_devices() -> list[str]:
+    """Get list of available devices for current platform."""
+    devices = ["Auto", "CPU"]
+
+    if sys.platform == "darwin":
+        # macOS - check MPS
+        if torch.backends.mps.is_available():
+            devices.append("MPS")
+    else:
+        # Windows/Linux - check CUDA
+        if torch.cuda.is_available():
+            devices.append("CUDA")
+
+    return devices
+
 def should_use_lmdeploy(backbone_choice: str, device_choice: str) -> bool:
     """Determine if we should use LMDeploy backend."""
+    # LMDeploy not supported on macOS
+    if sys.platform == "darwin":
+        return False
+
     if "gguf" in backbone_choice.lower():
         return False
-    
+
     if device_choice == "Auto":
         has_gpu = torch.cuda.is_available()
     elif device_choice == "CUDA":
         has_gpu = torch.cuda.is_available()
     else:
         has_gpu = False
-    
+
     return has_gpu
 
 @lru_cache(maxsize=32)
@@ -74,6 +94,8 @@ def cleanup_gpu_memory():
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         torch.cuda.synchronize()
+    elif torch.backends.mps.is_available():
+        torch.mps.empty_cache()
     gc.collect()
 
 def load_model(backbone_choice: str, codec_choice: str, device_choice: str, 
@@ -161,24 +183,40 @@ def load_model(backbone_choice: str, codec_choice: str, device_choice: str,
         
         if not use_lmdeploy:
             print(f"📦 Using original backend")
-            
+
             if device_choice == "Auto":
                 if "gguf" in backbone_choice.lower():
-                    backbone_device = "gpu" if torch.cuda.is_available() else "cpu"
+                    # GGUF: uses Metal on Mac, CUDA on Windows/Linux
+                    if sys.platform == "darwin":
+                        backbone_device = "gpu"  # llama-cpp-python uses Metal
+                    else:
+                        backbone_device = "gpu" if torch.cuda.is_available() else "cpu"
                 else:
-                    backbone_device = "cuda" if torch.cuda.is_available() else "cpu"
-                
+                    # PyTorch model
+                    if sys.platform == "darwin":
+                        backbone_device = "mps" if torch.backends.mps.is_available() else "cpu"
+                    else:
+                        backbone_device = "cuda" if torch.cuda.is_available() else "cpu"
+
+                # Codec device
                 if "ONNX" in codec_choice:
                     codec_device = "cpu"
+                elif sys.platform == "darwin":
+                    codec_device = "mps" if torch.backends.mps.is_available() else "cpu"
                 else:
                     codec_device = "cuda" if torch.cuda.is_available() else "cpu"
+
+            elif device_choice == "MPS":
+                backbone_device = "mps"
+                codec_device = "mps" if "ONNX" not in codec_choice else "cpu"
+
             else:
                 backbone_device = device_choice.lower()
                 codec_device = device_choice.lower()
-                
+
                 if "ONNX" in codec_choice:
                     codec_device = "cpu"
-            
+
             if "gguf" in backbone_choice.lower() and backbone_device == "cuda":
                 backbone_device = "gpu"
             
@@ -668,7 +706,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
             with gr.Row():
                 backbone_select = gr.Dropdown(list(BACKBONE_CONFIGS.keys()), value="VieNeu-TTS (GPU)", label="🦜 Backbone")
                 codec_select = gr.Dropdown(list(CODEC_CONFIGS.keys()), value="NeuCodec (Standard)", label="🎵 Codec")
-                device_choice = gr.Radio(["Auto", "CPU", "CUDA"], value="Auto", label="🖥️ Device")
+                device_choice = gr.Radio(get_available_devices(), value="Auto", label="🖥️ Device")
             
             with gr.Row():
                 enable_triton = gr.Checkbox(value=True, label="⚡ Enable Triton Compilation")
