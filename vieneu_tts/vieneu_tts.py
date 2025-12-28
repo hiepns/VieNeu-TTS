@@ -122,6 +122,12 @@ class VieNeuTTS:
         self._load_codec(codec_repo, codec_device)
     
     def _load_backbone(self, backbone_repo, backbone_device):
+        # MPS device validation
+        if backbone_device == "mps":
+            if not torch.backends.mps.is_available():
+                print("Warning: MPS not available, falling back to CPU")
+                backbone_device = "cpu"
+
         print(f"Loading backbone from: {backbone_repo} on {backbone_device} ...")
 
         if backbone_repo.lower().endswith("gguf") or "gguf" in backbone_repo.lower():
@@ -151,6 +157,12 @@ class VieNeuTTS:
             )
     
     def _load_codec(self, codec_repo, codec_device):
+        # MPS device validation
+        if codec_device == "mps":
+            if not torch.backends.mps.is_available():
+                print("Warning: MPS not available for codec, falling back to CPU")
+                codec_device = "cpu"
+
         print(f"Loading codec from: {codec_repo} on {codec_device} ...")
         match codec_repo:
             case "neuphonic/neucodec":
