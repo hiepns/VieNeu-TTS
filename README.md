@@ -20,7 +20,8 @@ VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
 
 **Author:** Phạm Nguyễn Ngọc Bảo
 
-> [!TIP] > **New:** Use the **[Makefile Guide](docs/makefile_usage.md)** ([Vietnamese](docs/makefile_usage.vi.md)) for a streamlined, interactive setup process on Windows, macOS, and Linux.
+> [!TIP]
+> Use the **[Makefile Guide](docs/makefile_usage.md)** ([Vietnamese](docs/makefile_usage.vi.md)) for a streamlined, interactive setup process on Windows, macOS, and Linux.
 
 ---
 
@@ -103,7 +104,8 @@ paru -S aur/espeak-ng
 **Option A: For GPU Users (Recommended)**
 Designed for NVIDIA 30xx/40xx/50xx series. Includes `lmdeploy` and `triton` for maximum performance.
 
-> [!IMPORTANT] > **Update your NVIDIA Drivers & Install CUDA Toolkit!**
+> [!IMPORTANT]
+> **Update your NVIDIA Drivers & Install CUDA Toolkit!**
 > This project uses **CUDA 12.8**. Please ensure your NVIDIA driver is up-to-date (support CUDA 12.8 or newer) to avoid compatibility issues, especially on RTX 30 series.
 >
 > To use `lmdeploy`, you **MUST** install the **NVIDIA GPU Computing Toolkit**: [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads).
