@@ -1,0 +1,285 @@
+SHELL := /bin/bash
+
+.PHONY: help setup-gpu setup-cpu demo docker-cpu docker-gpu check clean
+
+help:
+	@echo "Targets:"
+	@echo "  make check       - check toolchain (python>=3.12, uv, espeak, docker, gpu, .env...)"
+	@echo "  make setup-gpu   - setup GPU environment (uv sync with default config)"
+	@echo "  make setup-cpu   - setup CPU environment (sync CPU deps, temporary pyproject.toml swap with backup/restore)"
+	@echo "  make demo        - run Gradio UI"
+	@echo "  make docker-cpu  - run docker compose --profile cpu (auto-create .env if needed)"
+	@echo "  make docker-gpu  - run docker compose --profile gpu (auto-create .env if needed)"
+	@echo "  make clean       - clean artifacts (.venv, cache, ...)"
+	@echo "  make uv          - install uv (standalone)"
+	@echo "  make espeak      - install eSpeak NG (standalone)"
+
+# --- Setup ---
+check-install-prereqs:
+	@set -euo pipefail; \
+	C_GREEN='\033[0;32m'; \
+	C_YELLOW='\033[1;33m'; \
+	C_RED='\033[0;31m'; \
+	C_RESET='\033[0m'; \
+	echo ">> Checking prerequisites..."; \
+	OS_TYPE="unknown"; \
+	if [[ "$$OSTYPE" == "msys" || "$$OSTYPE" == "cygwin" || "$$OSTYPE" == "win32" ]]; then OS_TYPE="windows"; fi; \
+	if [[ "$$OSTYPE" == "darwin"* ]]; then OS_TYPE="macos"; fi; \
+	if [[ "$$OSTYPE" == "linux-gnu"* ]]; then OS_TYPE="linux"; fi; \
+	\
+	# --- Python Check --- \
+	if ! command -v python >/dev/null 2>&1; then \
+	  echo -e "$${C_YELLOW}[WARNING] Python not found.$${C_RESET}"; \
+	  read -p "Install Python 3.12? [y/N] " ans; \
+	  if [[ "$$ans" =~ ^[Yy]$$ ]]; then \
+	    if [ "$$OS_TYPE" == "windows" ]; then \
+	       echo "Installing Python via winget..."; \
+	       winget install -e --id Python.Python.3.12 || { echo -e "$${C_RED}[ERROR] Install failed.$${C_RESET}"; exit 1; }; \
+	    elif [ "$$OS_TYPE" == "macos" ]; then \
+	       echo "Installing via brew..."; \
+	       brew install python@3.12 || { echo -e "$${C_RED}[ERROR] Install failed.$${C_RESET}"; exit 1; }; \
+	    elif [ "$$OS_TYPE" == "linux" ]; then \
+	       echo "Installing via apt/pacman (guessing)..."; \
+	       (sudo apt update && sudo apt install -y python3-full) || (sudo pacman -S --noconfirm python) || { echo -e "$${C_RED}[ERROR] Install failed.$${C_RESET}"; exit 1; }; \
+	    else \
+	       echo -e "$${C_RED}[ERROR] OS not detected. Please install Python 3.12 manually.$${C_RESET}"; exit 1; \
+	    fi; \
+	  else \
+	    echo -e "$${C_RED}[ERROR] Python is required. Aborting.$${C_RESET}"; exit 1; \
+	  fi; \
+	fi; \
+	# --- uv Check --- \
+	if ! command -v uv >/dev/null 2>&1; then \
+	  echo -e "$${C_YELLOW}[WARNING] uv not found.$${C_RESET}"; \
+	  read -p "Install uv? [y/N] " ans; \
+	  if [[ "$$ans" =~ ^[Yy]$$ ]]; then \
+	    if [ "$$OS_TYPE" == "windows" ]; then \
+	       echo "Installing uv via Powershell..."; \
+	       powershell -c "irm https://astral.sh/uv/install.ps1 | iex" || { echo -e "$${C_RED}[ERROR] Install failed.$${C_RESET}"; exit 1; }; \
+	    else \
+	       echo "Installing uv via curl..."; \
+	       curl -LsSf https://astral.sh/uv/install.sh | sh || { echo -e "$${C_RED}[ERROR] Install failed.$${C_RESET}"; exit 1; }; \
+	    fi; \
+	  else \
+	    echo -e "$${C_RED}[ERROR] uv is required. Aborting.$${C_RESET}"; exit 1; \
+	  fi; \
+	fi; \
+	# --- eSpeak Check --- \
+	if ! command -v espeak-ng >/dev/null 2>&1 && ! command -v espeak >/dev/null 2>&1; then \
+	   echo -e "$${C_RED}[ERROR] eSpeak NG not found. Required for phonemizer.$${C_RESET}"; \
+	   read -p "Install eSpeak NG? [y/N] " ans; \
+	   if [[ "$$ans" =~ ^[Yy]$$ ]]; then \
+	       $(MAKE) espeak; \
+	       echo -e "$${C_YELLOW}NOTE: If installation required a separate window or manual steps, please complete them, RESTART your shell, and run make again.$${C_RESET}"; \
+	   else \
+	       echo "Aborting."; \
+	   fi; \
+	   exit 1; \
+	fi
+
+uv:
+	@echo ">> Installing uv..."
+	@if [ "$$(uname -o 2>/dev/null)" = "Msys" ] || [ "$$(uname -o 2>/dev/null)" = "Cygwin" ]; then \
+	    powershell -c "irm https://astral.sh/uv/install.ps1 | iex"; \
+	else \
+	    curl -LsSf https://astral.sh/uv/install.sh | sh; \
+	fi
+
+espeak:
+	@echo ">> Installing eSpeak NG..."
+	@if [ "$$(uname -o 2>/dev/null)" = "Msys" ] || [ "$$(uname -o 2>/dev/null)" = "Cygwin" ]; then \
+	   # Try winget first
+	   if command -v winget >/dev/null 2>&1; then \
+	       echo "Trying winget..."; \
+	       winget install -e --id eSpeak-NG.eSpeak-NG || { echo "Winget failed/not found. Opening download page..."; start https://github.com/espeak-ng/espeak-ng/releases; }; \
+	   else \
+	       echo "Opening download page..."; \
+	       start https://github.com/espeak-ng/espeak-ng/releases; \
+	   fi; \
+	elif [ "$$(uname)" = "Darwin" ]; then \
+	    brew install espeak; \
+	elif command -v apt >/dev/null 2>&1; then \
+	    sudo apt update && sudo apt install -y espeak-ng; \
+	elif command -v pacman >/dev/null 2>&1; then \
+	    sudo pacman -S --noconfirm espeak-ng; \
+	else \
+	    echo "Unknown OS/Manager. Please install espeak-ng manually."; \
+	fi
+
+setup-gpu: check-install-prereqs check-gpu-prereqs
+	uv sync
+
+check-gpu-prereqs:
+	@set -euo pipefail; \
+	C_GREEN='\033[0;32m'; \
+	C_YELLOW='\033[1;33m'; \
+	C_RED='\033[0;31m'; \
+	C_RESET='\033[0m'; \
+	echo ">> Checking GPU prerequisites..."; \
+	OS_TYPE="unknown"; \
+	if [[ "$$OSTYPE" == "msys" || "$$OSTYPE" == "cygwin" || "$$OSTYPE" == "win32" ]]; then OS_TYPE="windows"; fi; \
+	if [[ "$$OSTYPE" == "linux-gnu"* ]]; then OS_TYPE="linux"; fi; \
+	\
+	# --- NVIDIA Driver Check --- \
+	if ! command -v nvidia-smi >/dev/null 2>&1; then \
+	  echo -e "$${C_YELLOW}[WARNING] NVIDIA Driver (nvidia-smi) not found.$${C_RESET}"; \
+	  read -p "Install/Download NVIDIA Driver? [y/N] " ans; \
+	  if [[ "$$ans" =~ ^[Yy]$$ ]]; then \
+	    if [ "$$OS_TYPE" == "windows" ]; then \
+	       echo "Opening download page..."; \
+	       start https://www.nvidia.com/Download/index.aspx || echo "Go to: https://www.nvidia.com/Download/index.aspx"; \
+	    else \
+	       echo "For Linux, please install 'nvidia-driver-XXX' via your package manager."; \
+	    fi; \
+	  fi; \
+	else \
+	  echo -e "$${C_GREEN}[OK]$${C_RESET} NVIDIA Driver found."; \
+	fi; \
+	\
+	# --- CUDA Toolkit Check (nvcc) --- \
+	if ! command -v nvcc >/dev/null 2>&1; then \
+	  echo -e "$${C_YELLOW}[WARNING] CUDA Toolkit (nvcc) not found.$${C_RESET}"; \
+	  echo -e "      (Required if compiling custom CUDA extensions)"; \
+	  read -p "Install/Download CUDA Toolkit? [y/N] " ans; \
+	  if [[ "$$ans" =~ ^[Yy]$$ ]]; then \
+	    if [ "$$OS_TYPE" == "windows" ]; then \
+	       echo "Opening download page..."; \
+	       start https://developer.nvidia.com/cuda-downloads || echo "Go to: https://developer.nvidia.com/cuda-downloads"; \
+	    else \
+	       echo "For Linux, please install 'nvidia-cuda-toolkit' (or similar)."; \
+	    fi; \
+	  fi; \
+	else \
+	  echo -e "$${C_GREEN}[OK]$${C_RESET} CUDA Toolkit (nvcc) found."; \
+	fi
+
+# CPU: uv does not support specifying pyproject.toml.cpu directly -> temporary swap with backup/restore
+setup-cpu: check-install-prereqs
+	@set -euo pipefail; \
+	echo ">> CPU setup (temporary swap pyproject.toml)"; \
+	test -f pyproject.toml.cpu || { echo "ERROR: missing pyproject.toml.cpu"; exit 1; }; \
+	if [ -f pyproject.toml ]; then \
+	  cp -f pyproject.toml pyproject.toml.bak.gpu; \
+	  echo "   - backed up pyproject.toml -> pyproject.toml.bak.gpu"; \
+	fi; \
+	cp -f pyproject.toml.cpu pyproject.toml; \
+	trap ' \
+	  if [ -f pyproject.toml.bak.gpu ]; then \
+	    mv -f pyproject.toml.bak.gpu pyproject.toml; \
+	    echo "   - restored pyproject.toml"; \
+	  else \
+	    echo "   - no backup found; keeping pyproject.toml as-is"; \
+	  fi \
+	' EXIT; \
+	uv sync
+
+demo:
+	uv run gradio_app.py
+
+# --- Docker (auto-create .env if missing) ---
+docker-cpu:
+	@set -euo pipefail; \
+	if [ ! -f .env ] && [ -f .env.example ]; then \
+	  cp .env.example .env; \
+	  echo ">> Created .env from .env.example"; \
+	fi; \
+	docker compose --profile cpu up
+
+docker-gpu:
+	@set -euo pipefail; \
+	if [ ! -f .env ] && [ -f .env.example ]; then \
+	  cp .env.example .env; \
+	  echo ">> Created .env from .env.example"; \
+	fi; \
+	docker compose --profile gpu up
+
+# --- Environment/version checks ---
+check:
+	@set -euo pipefail; \
+	C_CYAN='\033[0;36m'; \
+	C_GREEN='\033[0;32m'; \
+	C_YELLOW='\033[1;33m'; \
+	C_RED='\033[0;31m'; \
+	C_BLUE='\033[0;34m'; \
+	C_RESET='\033[0m'; \
+	echo -e "$${C_CYAN}== System ==$${C_RESET}"; \
+	uname -a || true; \
+	echo; \
+	echo -e "$${C_CYAN}== Python ==$${C_RESET}"; \
+	if command -v python >/dev/null 2>&1; then \
+	  python -V; \
+	  python -c 'import sys; ok = sys.version_info >= (3,12); print("python_ok(>=3.12):", ok); sys.exit(0 if ok else 2)' && echo -e "$${C_GREEN}[OK]$${C_RESET} Python version OK" || echo -e "$${C_YELLOW}[WARNING]$${C_RESET} Python should be >= 3.12 (repo requirement)."; \
+	else \
+	  echo -e "$${C_RED}[ERROR]$${C_RESET} python not found. Need Python >= 3.12."; \
+	fi; \
+	echo; \
+	echo -e "$${C_CYAN}== uv ==$${C_RESET}"; \
+	if command -v uv >/dev/null 2>&1; then \
+	  uv --version; \
+	  echo -e "$${C_GREEN}[OK]$${C_RESET} uv found"; \
+	else \
+	  echo -e "$${C_YELLOW}[WARNING]$${C_RESET} uv not found (repo uses uv sync/uv run)."; \
+	fi; \
+	echo; \
+	echo -e "$${C_CYAN}== eSpeak NG (libespeak) ==$${C_RESET}"; \
+	if command -v espeak-ng >/dev/null 2>&1; then \
+	  espeak-ng --version | head -n 1; \
+	  echo -e "$${C_GREEN}[OK]$${C_RESET} eSpeak NG found"; \
+	elif command -v espeak >/dev/null 2>&1; then \
+	  espeak --version | head -n 1; \
+	  echo -e "$${C_GREEN}[OK]$${C_RESET} eSpeak found"; \
+	else \
+	  echo -e "$${C_YELLOW}[WARNING]$${C_RESET} eSpeak NG not found. Missing libespeak can break phonemizer."; \
+	fi; \
+	echo; \
+	echo -e "$${C_CYAN}== Docker ==$${C_RESET}"; \
+	if command -v docker >/dev/null 2>&1; then \
+	  docker --version; \
+	  echo -e "$${C_GREEN}[OK]$${C_RESET} Docker found"; \
+	else \
+	  echo -e "$${C_BLUE}[INFO]$${C_RESET} docker not found (only needed for docker-* targets)."; \
+	fi; \
+	if docker compose version >/dev/null 2>&1; then \
+	  docker compose version; \
+	  echo -e "$${C_GREEN}[OK]$${C_RESET} Docker Compose found"; \
+	else \
+	  echo -e "$${C_BLUE}[INFO]$${C_RESET} docker compose plugin not found."; \
+	fi; \
+	if [ -f .env ]; then \
+	  echo -e "$${C_GREEN}[OK]$${C_RESET} .env file found"; \
+	else \
+	  echo -e "$${C_YELLOW}[WARNING]$${C_RESET} .env file not found (will be created from .env.example when running docker-* targets)."; \
+	fi; \
+	echo; \
+	echo -e "$${C_CYAN}== GPU ==$${C_RESET}"; \
+	echo "Detected your GPUs (System):"; \
+	IS_WINDOWS=false; \
+	if [[ "$$OSTYPE" == "msys" || "$$OSTYPE" == "cygwin" || "$$OSTYPE" == "win32" ]]; then IS_WINDOWS=true; fi; \
+	if [ "$$IS_WINDOWS" = true ]; then \
+	    powershell "Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name" || echo "Could not list GPUs"; \
+	elif [[ "$$OSTYPE" == "darwin"* ]]; then \
+	    system_profiler SPDisplaysDataType | grep "Chipset Model" | sed 's/.*Chipset Model: //' || echo "Could not list GPUs"; \
+	elif command -v lspci >/dev/null 2>&1; then \
+	    lspci | grep -i 'vga\|3d\|display' || echo "No GPUs found via lspci"; \
+	else \
+	    echo "Universal GPU detection not supported on this OS/Toolchain."; \
+	fi; \
+	echo; \
+	if command -v nvidia-smi >/dev/null 2>&1; then \
+	  echo -e "$${C_GREEN}[OK]$${C_RESET} NVIDIA GPU detected"; \
+	  nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -n 1; \
+	  echo "CUDA Version (Driver):"; \
+	  nvidia-smi --query-gpu=cuda_version --format=csv,noheader | head -n 1 || echo "N/A"; \
+	  echo "CUDA Toolkit (nvcc):"; \
+	  nvcc --version | grep release | sed 's/.*release //' | sed 's/,.*//' || echo -e "$${C_YELLOW}[WARNING] Not found$${C_RESET}"; \
+	  echo "GPU(s):"; \
+	  nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader | while read line; do echo "  GPU $$line"; done || nvidia-smi -L; \
+	else \
+	  echo -e "$${C_BLUE}[INFO]$${C_RESET} nvidia-smi not found (OK for CPU-only mode)."; \
+	fi; \
+	echo; \
+	echo -e "$${C_CYAN}== Repo files ==$${C_RESET}"; \
+	ls -1 pyproject.toml pyproject.toml.cpu uv.lock 2>/dev/null && echo -e "$${C_GREEN}[OK]$${C_RESET} All required files found" || echo -e "$${C_YELLOW}[WARNING]$${C_RESET} Some files missing"
+
+clean:
+	rm -rf .venv __pycache__ .pytest_cache
