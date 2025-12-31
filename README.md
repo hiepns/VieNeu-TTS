@@ -6,7 +6,7 @@
 
 <img width="899" height="615" alt="Untitled" src="https://github.com/user-attachments/assets/7eb9b816-6ab7-4049-866f-f85e36cb9c6f" />
 
-**VieNeu-TTS** is an advanced on-device Vietnamese Text-to-Speech (TTS) model with **instant voice cloning**.  
+**VieNeu-TTS** is an advanced on-device Vietnamese Text-to-Speech (TTS) model with **instant voice cloning**.
 
 Trained on ~1000 hours of high-quality Vietnamese speech, this model represents a significant upgrade from VieNeu-TTS-140h with the following improvements:
 
@@ -20,6 +20,10 @@ VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
 
 **Author:** Phạm Nguyễn Ngọc Bảo
 
+> [!TIP] > **New:** Use the **[Makefile Guide](docs/makefile_usage.md)** ([Vietnamese](docs/makefile_usage.vi.md)) for a streamlined, interactive setup process on Windows, macOS, and Linux.
+
+---
+
 [<img width="600" height="595" alt="VieNeu-TTS" src="https://github.com/user-attachments/assets/6b32df9d-7e2e-474f-94c8-43d6fa586d15" />](https://github.com/user-attachments/assets/6b32df9d-7e2e-474f-94c8-43d6fa586d15)
 
 ---
@@ -30,18 +34,19 @@ VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
 - **Audio codec:** NeuCodec (torch implementation; ONNX & quantized variants supported)
 - **Context window:** 2 048 tokens shared by prompt text and speech tokens
 - **Output watermark:** Enabled by default
-- **Training data:**  
-  - [VieNeu-TTS-1000h](https://huggingface.co/datasets/pnnbao-ump/VieNeu-TTS-1000h) — 443,641 curated Vietnamese samples  
+- **Training data:**
+  - [VieNeu-TTS-1000h](https://huggingface.co/datasets/pnnbao-ump/VieNeu-TTS-1000h) — 443,641 curated Vietnamese samples
 
 ### Model Variants
 
-| Model | Format | Device | Quality | Speed | Streaming |
-|-------|--------|--------|---------|-------|-----------|
-| VieNeu-TTS | PyTorch | GPU/CPU | ⭐⭐⭐⭐⭐ | Very Fast with lmdeploy | ❌ |
-| VieNeu-TTS-q8-gguf | GGUF Q8 | CPU/GPU | ⭐⭐⭐⭐ | Fast | ✅ |
-| VieNeu-TTS-q4-gguf | GGUF Q4 | CPU/GPU | ⭐⭐⭐ | Very Fast | ✅ |
+| Model              | Format  | Device  | Quality    | Speed                   | Streaming |
+| ------------------ | ------- | ------- | ---------- | ----------------------- | --------- |
+| VieNeu-TTS         | PyTorch | GPU/CPU | ⭐⭐⭐⭐⭐ | Very Fast with lmdeploy | ❌        |
+| VieNeu-TTS-q8-gguf | GGUF Q8 | CPU/GPU | ⭐⭐⭐⭐   | Fast                    | ✅        |
+| VieNeu-TTS-q4-gguf | GGUF Q4 | CPU/GPU | ⭐⭐⭐     | Very Fast               | ✅        |
 
 **Recommendations:**
+
 - **GPU users**: Use `VieNeu-TTS` (PyTorch) for best quality
 - **CPU users**: Use `VieNeu-TTS-q4-gguf` for fastest inference or `VieNeu-TTS-q8-gguf` for better quality
 - **Streaming**: Only GGUF models support streaming inference
@@ -89,6 +94,7 @@ paru -S aur/espeak-ng
 ```
 
 **macOS tips**
+
 - If the phonemizer cannot find the library, set `PHONEMIZER_ESPEAK_LIBRARY` to the `.dylib` path.
 - Validate installation with: `echo 'test' | espeak-ng -x -q --ipa -v vi`
 
@@ -97,11 +103,19 @@ paru -S aur/espeak-ng
 **Option A: For GPU Users (Recommended)**
 Designed for NVIDIA 30xx/40xx/50xx series. Includes `lmdeploy` and `triton` for maximum performance.
 
-> [!IMPORTANT]
-> **Update your NVIDIA Drivers & Install CUDA Toolkit!**
+> [!IMPORTANT] > **Update your NVIDIA Drivers & Install CUDA Toolkit!**
 > This project uses **CUDA 12.8**. Please ensure your NVIDIA driver is up-to-date (support CUDA 12.8 or newer) to avoid compatibility issues, especially on RTX 30 series.
 >
 > To use `lmdeploy`, you **MUST** install the **NVIDIA GPU Computing Toolkit**: [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads).
+
+Run Makefile with GPU profile:
+
+```bash
+# Recommended:
+make setup-gpu
+```
+
+Manual installation:
 
 ```bash
 uv sync
@@ -109,6 +123,15 @@ uv sync
 
 **Option B: For CPU Users**
 Lightweight installation with `llama-cpp-python` (CPU) and standard PyTorch (CPU).
+
+Run Makefile with CPU profile:
+
+```bash
+# Recommended:
+make setup-cpu
+```
+
+Manual installation:
 
 1. Delete the existing configuration:
    ```bash
@@ -130,6 +153,10 @@ Lightweight installation with `llama-cpp-python` (CPU) and standard PyTorch (CPU
 Start the Gradio interface:
 
 ```bash
+# Recommended:
+make demo
+
+# Manual:
 uv run gradio_app.py
 ```
 
@@ -213,10 +240,10 @@ VieNeu-TTS/
 
 ## 📚 References
 
-- [GitHub Repository](https://github.com/pnnbao97/VieNeu-TTS)  
-- [Hugging Face Model Card](https://huggingface.co/pnnbao-ump/VieNeu-TTS)  
-- [NeuTTS Air base model](https://huggingface.co/neuphonic/neutts-air)  
-- [Fine-tuning guide](https://github.com/pnnbao-ump/VieNeuTTS/blob/main/finetune.ipynb)  
+- [GitHub Repository](https://github.com/pnnbao97/VieNeu-TTS)
+- [Hugging Face Model Card](https://huggingface.co/pnnbao-ump/VieNeu-TTS)
+- [NeuTTS Air base model](https://huggingface.co/neuphonic/neutts-air)
+- [Fine-tuning guide](https://github.com/pnnbao-ump/VieNeuTTS/blob/main/finetune.ipynb)
 - [VieNeuCodec dataset](https://huggingface.co/datasets/pnnbao-ump/VieNeuCodec-dataset)
 
 ---
@@ -257,18 +284,19 @@ Please also cite the base model:
 
 Contributions are welcome!
 
-1. Fork the repository  
-2. Create a feature branch: `git checkout -b feature/amazing-feature`  
-3. Commit your changes: `git commit -m "Add amazing feature"`  
-4. Push the branch: `git push origin feature/amazing-feature`  
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m "Add amazing feature"`
+4. Push the branch: `git push origin feature/amazing-feature`
 5. Open a pull request
 
 ---
 
 ## 📞 Support
 
-- GitHub Issues: [github.com/pnnbao97/VieNeu-TTS/issues](https://github.com/pnnbao97/VieNeu-TTS/issues)  
-- Hugging Face: [huggingface.co/pnnbao-ump](https://huggingface.co/pnnbao-ump)  
+- GitHub Issues: [github.com/pnnbao97/VieNeu-TTS/issues](https://github.com/pnnbao97/VieNeu-TTS/issues)
+- Hugging Face: [huggingface.co/pnnbao-ump](https://huggingface.co/pnnbao-ump)
+- Discord: [Join with us](https://discord.gg/mQWr4cp3)
 - Facebook: [Phạm Nguyễn Ngọc Bảo](https://www.facebook.com/bao.phamnguyenngoc.5)
 
 ---
@@ -280,7 +308,3 @@ This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-ai
 ---
 
 **Made with ❤️ for the Vietnamese TTS community**
-
-
-
-
