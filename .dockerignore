@@ -16,7 +16,7 @@ __pycache__/
 venv/
 env/
 ENV/
-uv.lock
+
 
 # Output files
 output_audio/

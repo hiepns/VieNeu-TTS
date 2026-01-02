@@ -695,7 +695,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
         </div>
         <div class="model-card-item">
             <strong>Tác giả:</strong>
-            <span>Phạm Nguyễn Ngọc Bảo</span>
+            <a href="https://www.facebook.com/bao.phamnguyenngoc.5" target="_blank" class="model-card-link">Phạm Nguyễn Ngọc Bảo</a>
         </div>
     </div>
 </div>

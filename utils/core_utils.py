@@ -1,4 +1,5 @@
 import re
+import os
 from typing import List
 
 def split_text_into_chunks(text: str, max_chars: int = 256) -> List[str]:

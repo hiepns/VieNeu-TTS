@@ -1,4 +1,4 @@
-FROM nvidia/cuda:13.0.0-runtime-ubuntu24.04 AS base
+FROM nvidia/cuda:12.8.0-runtime-ubuntu24.04 AS base
 
 # Thiết lập biến môi trường
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -15,8 +15,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get update && apt-get install -y --no-install-recommends \
     python3.12 \
     python3.12-dev \
-    python3.12-distutils \
-    python3-pip \
     espeak-ng \
     libespeak-ng1 \
     git \
@@ -28,10 +26,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Config python default
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1 \
     && update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 \
-    && curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12
+    && curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12 - --break-system-packages
 
 # Cài đặt uv
-RUN pip install --no-cache-dir uv
+RUN pip install --no-cache-dir uv --break-system-packages
 
 # Thiết lập thư mục làm việc
 WORKDIR /workspace
