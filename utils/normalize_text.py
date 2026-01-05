@@ -45,7 +45,18 @@ class VietnameseTTSNormalizer:
                       'năm', 'sáu', 'bảy', 'tám', 'chín']
     
     def normalize(self, text):
-        """Main normalization pipeline."""
+        """Main normalization pipeline with EN tag protection."""
+        # Step 1: Extract and protect EN tags
+        en_contents = []
+        placeholder_pattern = "___EN_PLACEHOLDER_{}___ "
+        
+        def extract_en(match):
+            en_contents.append(match.group(0))
+            return placeholder_pattern.format(len(en_contents) - 1)
+        
+        text = re.sub(r'<en>.*?</en>', extract_en, text, flags=re.IGNORECASE)
+        
+        # Step 2: Normal normalization pipeline
         text = text.lower()
         text = self._normalize_temperature(text)
         text = self._normalize_currency(text)
@@ -58,6 +69,14 @@ class VietnameseTTSNormalizer:
         text = self._number_to_words(text)
         text = self._normalize_special_chars(text)
         text = self._normalize_whitespace(text)
+        
+        # Step 3: Restore EN tags
+        for idx, en_content in enumerate(en_contents):
+            text = text.replace(placeholder_pattern.format(idx).lower(), en_content + ' ')
+        
+        # Final whitespace cleanup
+        text = self._normalize_whitespace(text)
+        
         return text
     
     def _normalize_temperature(self, text):
@@ -141,9 +160,8 @@ class VietnameseTTSNormalizer:
                 hour, minute, second = groups
                 hour_int, minute_int, second_int = int(hour), int(minute), int(second)
                 
-                # Validate ranges
                 if not (0 <= hour_int <= 23):
-                    return match.group(0)  # Return original if invalid
+                    return match.group(0)
                 if not (0 <= minute_int <= 59):
                     return match.group(0)
                 if not (0 <= second_int <= 59):
@@ -156,7 +174,6 @@ class VietnameseTTSNormalizer:
                 hour, minute = groups
                 hour_int, minute_int = int(hour), int(minute)
                 
-                # Validate ranges
                 if not (0 <= hour_int <= 23):
                     return match.group(0)
                 if not (0 <= minute_int <= 59):
@@ -174,7 +191,6 @@ class VietnameseTTSNormalizer:
                 
                 return f"{hour} giờ"
         
-        # Apply patterns with validation
         text = re.sub(r'(\d{1,2}):(\d{2}):(\d{2})', validate_and_convert_time, text)
         text = re.sub(r'(\d{1,2}):(\d{2})', validate_and_convert_time, text)
         text = re.sub(r'(\d{1,2})h(\d{2})', validate_and_convert_time, text)
@@ -189,7 +205,6 @@ class VietnameseTTSNormalizer:
             """Check if date components are valid."""
             day, month, year = int(day), int(month), int(year)
             
-            # Basic range checks
             if not (1 <= day <= 31):
                 return False
             if not (1 <= month <= 12):
@@ -201,7 +216,7 @@ class VietnameseTTSNormalizer:
             day, month, year = match.groups()
             if is_valid_date(day, month, year):
                 return f"ngày {day} tháng {month} năm {year}"
-            return match.group(0)  # Return original if invalid
+            return match.group(0)
         
         def date_iso_to_text(match):
             year, month, day = match.groups()
@@ -216,7 +231,6 @@ class VietnameseTTSNormalizer:
                 return f"ngày {day} tháng {month} năm {full_year}"
             return match.group(0)
         
-        # Apply patterns with validation
         text = re.sub(r'\bngày\s+(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})\b', 
                     lambda m: date_to_text(m).replace('ngày ngày', 'ngày'), text)
         text = re.sub(r'\bngày\s+(\d{1,2})[/\-](\d{1,2})[/\-](\d{2})\b', 
@@ -248,10 +262,8 @@ class VietnameseTTSNormalizer:
     
     def _normalize_numbers(self, text):
         text = re.sub(r'(\d+(?:[,.]\d+)?)%', lambda m: f'{m.group(1)} phần trăm', text)
-        # 1. Xóa dấu thousand separator trước
         text = re.sub(r'(\d{1,3})(?:\.(\d{3}))+', lambda m: m.group(0).replace('.', ''), text)
     
-        # 2. Chuyển số thập phân thành chữ
         def decimal_to_words(match):
             whole = match.group(1)
             decimal = match.group(2)
@@ -259,9 +271,7 @@ class VietnameseTTSNormalizer:
             separator = 'phẩy' if ',' in match.group(0) else 'chấm'
             return f"{whole} {separator} {decimal_words}"
         
-        # 2a. Dấu phẩy
         text = re.sub(r'(\d+),(\d+)', decimal_to_words, text)
-        # 2b. Dấu chấm (1-2 chữ số thập phân)
         text = re.sub(r'(\d+)\.(\d{1,2})\b', decimal_to_words, text)
         
         return text
@@ -335,7 +345,9 @@ class VietnameseTTSNormalizer:
             remainder = num % 1000
             result = f"{self._read_three_digits(thousand)} nghìn"
             if remainder > 0:
-                if remainder < 100:
+                if remainder < 10:
+                    result += f" không trăm lẻ {self.digits[remainder]}"
+                elif remainder < 100:
                     result += f" không trăm {self._read_two_digits(remainder)}"
                 else:
                     result += f" {self._read_three_digits(remainder)}"
@@ -363,7 +375,7 @@ class VietnameseTTSNormalizer:
         text = re.sub(r'\s+[-–—]+\s+', ' ', text)
         text = re.sub(r'\.{2,}', ' ', text)
         text = re.sub(r'\s+\.\s+', ' ', text)
-        text = re.sub(r'[^\w\sàáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ.,!?;:@%]', ' ', text)
+        text = re.sub(r'[^\w\sàáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ.,!?;:@%_]', ' ', text)
         return text
     
     def _normalize_whitespace(self, text):
@@ -377,28 +389,15 @@ if __name__ == "__main__":
     normalizer = VietnameseTTSNormalizer()
     
     test_texts = [
-        "Giá 2.500.000đ (giảm 50%), mua trước 14h30 ngày 15/12/2025",
-        "Liên hệ: 0912-345-678 hoặc email@example.com",
-        "Tốc độ 120km/h, trọng lượng 75kg",
-        "Nhiệt độ 36,5°C, độ ẩm 80%",
-        "Số pi = 3,14159",
-        "Giá trị tăng 2.5M, đạt 10B",
-        "Nhiệt độ -15°C vào mùa đông",
-        "Điện áp 220V, công suất 2.5kW, tần số 50Hz",
-        "Tôi đi lấy l nước về nhà",
-        "Cần 5l nước cho công thức này",
-        "Vận tốc ánh sáng 299792km/s",
-        "Mật độ dân số 450 người/km2",
-        "Công suất 100 W/m2",
-        "Hôm nay 2025-01-15",
-        "Gọi +84 912 345 678",
-        "Nhiệt độ 25°C lúc 14:30:45",
-        "Ngày 15/12/25",
-        "Giá 3.140.159",
+        "Chào mừng <en>hello world</en> đến với AI",
+        "Công nghệ <en>machine learning</en> và <en>deep learning</en>",
+        "Giá 2.500.000đ với <en>discount</en> 50%",
+        "Nhiệt độ 25°C, <en>temperature</en> cao",
+        "Hệ thống <en>text-to-speech</en> tiếng Việt",
     ]
     
     print("=" * 80)
-    print("VIETNAMESE TTS NORMALIZATION TEST")
+    print("VIETNAMESE TTS NORMALIZATION TEST (WITH EN TAG)")
     print("=" * 80)
     
     for text in test_texts:
