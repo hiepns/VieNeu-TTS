@@ -91,12 +91,11 @@ This is the fastest and most reliable way to manage dependencies.
 
 **B. Choose your hardware:**
 
+> [!IMPORTANT]
+> **Update your NVIDIA Drivers & Install CUDA Toolkit!**
+> This project uses **CUDA 12.8**. Ensure your driver supports it and the [CUDA Toolkit 12.8](https://developer.nvidia.com/cuda-downloads) is installed.
+
 *   **For NVIDIA GPU users (NVIDIA 30xx/40xx/50xx):**
-
-    > [!IMPORTANT]
-    > **Update your NVIDIA Drivers & Install CUDA Toolkit!**
-    > This project uses **CUDA 12.8**. Ensure your driver supports it and the [CUDA Toolkit 12.8](https://developer.nvidia.com/cuda-downloads) is installed.
-
     ```bash
     uv sync
     ```
@@ -121,6 +120,8 @@ This is the fastest and most reliable way to manage dependencies.
 ```bash
 uv run gradio_app.py
 ```
+
+Then access the Web UI at `http://127.0.0.1:7860`.
 
 ---
 
