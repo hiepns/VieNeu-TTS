@@ -91,30 +91,34 @@ This is the fastest and most reliable way to manage dependencies.
 
 **B. Choose your hardware:**
 
+**Option A: For GPU Users (NVIDIA 30xx/40xx/50xx)**
+
 > [!IMPORTANT]
 > **Update your NVIDIA Drivers & Install CUDA Toolkit!**
-> This project uses **CUDA 12.8**. Ensure your driver supports it and the [CUDA Toolkit 12.8](https://developer.nvidia.com/cuda-downloads) is installed.
+> This project uses **CUDA 12.8**. Please ensure your NVIDIA driver is up-to-date (support CUDA 12.8 or newer) to avoid compatibility issues, especially on RTX 30 series.
+>
+> To use `lmdeploy`, you **MUST** install the **NVIDIA GPU Computing Toolkit**: [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads).
 
-*   **For NVIDIA GPU users (NVIDIA 30xx/40xx/50xx):**
-    ```bash
-    uv sync
-    ```
+```bash
+uv sync
+```
 
-*   **For CPU-only users:**
-    1. Switch to CPU configuration:
-       ```bash
-       # Windows:
-       ren pyproject.toml pyproject.toml.bak
-       copy pyproject.toml.cpu pyproject.toml
-       
-       # Linux/macOS:
-       mv pyproject.toml pyproject.toml.bak
-       cp pyproject.toml.cpu pyproject.toml
-       ```
-    2. Install dependencies:
-       ```bash
-       uv sync
-       ```
+**Option B: For CPU-only Users**
+
+1. Switch to CPU configuration:
+   ```bash
+   # Windows:
+   ren pyproject.toml pyproject.toml.bak
+   copy pyproject.toml.cpu pyproject.toml
+   
+   # Linux/macOS:
+   mv pyproject.toml pyproject.toml.bak
+   cp pyproject.toml.cpu pyproject.toml
+   ```
+2. Install dependencies:
+   ```bash
+   uv sync
+   ```
 
 **C. Run the Application:**
 ```bash
