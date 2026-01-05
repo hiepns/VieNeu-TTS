@@ -20,9 +20,6 @@ VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
 
 **Author:** Phạm Nguyễn Ngọc Bảo
 
-> [!TIP]
-> Use the **[Makefile Guide](docs/makefile_usage.md)** ([Vietnamese](docs/makefile_usage.vi.md)) for a streamlined, interactive setup process on Windows, macOS, and Linux.
-
 ---
 
 [<img width="600" height="595" alt="VieNeu-TTS" src="https://github.com/user-attachments/assets/6b32df9d-7e2e-474f-94c8-43d6fa586d15" />](https://github.com/user-attachments/assets/6b32df9d-7e2e-474f-94c8-43d6fa586d15)
@@ -85,61 +82,52 @@ Phonemizer requires eSpeak NG to function.
 
 ### 3. Environment Setup (Choose ONE method)
 
-You **only need to choose one** of the two methods below to install dependencies.
+#### Method 1: Standard with `uv` (Recommended)
+This is the fastest and most reliable way to manage dependencies.
 
-#### Method 1: Automated with Makefile (Recommended)
-Best for most users. It includes automated health checks for your system.
+**A. Install `uv`** (If you haven't already):
+- **Windows:** `powershell -c "irm https://astral.sh/uv/install.ps1 | iex"`
+- **Linux/macOS:** `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
-- **For NVIDIA GPU users:**
-  ```bash
-  make setup-gpu
-  ```
-- **For CPU-only users:**
-  ```bash
-  make setup-cpu
-  ```
-- **Run the Application:**
-  ```bash
-  make demo
-  ```
+**B. Choose your hardware:**
 
-#### Method 2: Manual with `uv` (Advanced)
-Best for developers or if `make` is not available on your system.
+*   **For NVIDIA GPU users (NVIDIA 30xx/40xx/50xx):**
+    > [!IMPORTANT]
+    > Ensure [CUDA Toolkit 12.8](https://developer.nvidia.com/cuda-downloads) and up-to-date drivers are installed.
+    ```bash
+    uv sync
+    ```
 
-**Step A: GPU Setup (NVIDIA 30xx/40xx/50xx)**
+*   **For CPU-only users:**
+    1. Switch to CPU configuration:
+       ```bash
+       # Windows:
+       ren pyproject.toml pyproject.toml.bak
+       copy pyproject.toml.cpu pyproject.toml
+       
+       # Linux/macOS:
+       mv pyproject.toml pyproject.toml.bak
+       cp pyproject.toml.cpu pyproject.toml
+       ```
+    2. Install dependencies:
+       ```bash
+       uv sync
+       ```
 
-> [!IMPORTANT]
-> **Update your NVIDIA Drivers & Install CUDA Toolkit!**
-> This project uses **CUDA 12.8**. Please ensure your NVIDIA driver is up-to-date (support CUDA 12.8 or newer) to avoid compatibility issues, especially on RTX 30 series.
->
-> To use `lmdeploy`, you **MUST** install the **NVIDIA GPU Computing Toolkit**: [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads).
-
-1. Ensure [CUDA Toolkit 12.8](https://developer.nvidia.com/cuda-downloads) is installed.
-2. Run command:
-   ```bash
-   uv sync
-   ```
-
-**Step B: CPU Setup**
-1. Switch to CPU configuration:
-   ```bash
-   # Windows (CMD/PowerShell)
-   ren pyproject.toml pyproject.toml.bak
-   copy pyproject.toml.cpu pyproject.toml
-   
-   # Linux/macOS
-   mv pyproject.toml pyproject.toml.bak
-   cp pyproject.toml.cpu pyproject.toml
-   ```
-2. Run command:
-   ```bash
-   uv sync
-   ```
-
-**Step C: Run the Application**
+**C. Run the Application:**
 ```bash
 uv run gradio_app.py
 ```
+
+---
+
+#### Method 2: Automatic with Makefile (Alternative)
+Best if you have `make` installed (standard on Linux/macOS, or via Git Bash on Windows). It handles configuration swaps automatically.
+
+- **Setup GPU:** `make setup-gpu`
+- **Setup CPU:** `make setup-cpu`
+- **Run Demo:** `make demo`
+
 
 Then access the Web UI at `http://127.0.0.1:7860`.
 
