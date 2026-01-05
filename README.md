@@ -92,8 +92,11 @@ This is the fastest and most reliable way to manage dependencies.
 **B. Choose your hardware:**
 
 *   **For NVIDIA GPU users (NVIDIA 30xx/40xx/50xx):**
+
     > [!IMPORTANT]
-    > Ensure [CUDA Toolkit 12.8](https://developer.nvidia.com/cuda-downloads) and up-to-date drivers are installed.
+    > **Update your NVIDIA Drivers & Install CUDA Toolkit!**
+    > This project uses **CUDA 12.8**. Ensure your driver supports it and the [CUDA Toolkit 12.8](https://developer.nvidia.com/cuda-downloads) is installed.
+
     ```bash
     uv sync
     ```
