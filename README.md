@@ -74,7 +74,12 @@ cd VieNeu-TTS
 ```
 
 ### 2. Install eSpeak NG (Required)
-Phonemizer requires eSpeak NG to function. Download the installer from [eSpeak NG Releases](https://github.com/espeak-ng/espeak-ng/releases) (Recommended: `.msi` for Windows).
+Phonemizer requires eSpeak NG to function.
+
+- **Windows:** Download installer from [eSpeak NG Releases](https://github.com/espeak-ng/espeak-ng/releases) (Recommended: `.msi`).
+- **macOS:** `brew install espeak`
+- **Ubuntu/Debian:** `sudo apt install espeak-ng`
+- **Arch Linux:** `paru -S aur/espeak-ng`
 
 ---
 
