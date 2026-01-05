@@ -68,41 +68,40 @@ VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
 ## 🏁 Getting Started
 
 ### 1. Clone the repository
-
 ```bash
 git clone https://github.com/pnnbao97/VieNeu-TTS.git
 cd VieNeu-TTS
 ```
 
-### 2. Install eSpeak NG (required by phonemizer)
+### 2. Install eSpeak NG (Required)
+Phonemizer requires eSpeak NG to function. Download the installer from [eSpeak NG Releases](https://github.com/espeak-ng/espeak-ng/releases) (Recommended: `.msi` for Windows).
 
-Follow the [official installation guide](https://github.com/espeak-ng/espeak-ng/blob/master/docs/guide.md). Common commands:
+---
 
-```bash
-# macOS
-brew install espeak
+### 3. Environment Setup (Choose ONE method)
 
-# Ubuntu / Debian
-sudo apt install espeak-ng
+You **only need to choose one** of the two methods below to install dependencies.
 
-# Arch Linux
-paru -S aur/espeak-ng
+#### Method 1: Automated with Makefile (Recommended)
+Best for most users. It includes automated health checks for your system.
 
-# Windows
-# Download installer from https://github.com/espeak-ng/espeak-ng/releases
-# Default path: C:\Program Files\eSpeak NG\
-# VieNeu-TTS auto-detects this path.
-```
+- **For NVIDIA GPU users:**
+  ```bash
+  make setup-gpu
+  ```
+- **For CPU-only users:**
+  ```bash
+  make setup-cpu
+  ```
+- **Run the Application:**
+  ```bash
+  make demo
+  ```
 
-**macOS tips**
+#### Method 2: Manual with `uv` (Advanced)
+Best for developers or if `make` is not available on your system.
 
-- If the phonemizer cannot find the library, set `PHONEMIZER_ESPEAK_LIBRARY` to the `.dylib` path.
-- Validate installation with: `echo 'test' | espeak-ng -x -q --ipa -v vi`
-
-### 3. Install Python dependencies (Python ≥ 3.12)
-
-**Option A: For GPU Users (Recommended)**
-Designed for NVIDIA 30xx/40xx/50xx series. Includes `lmdeploy` and `triton` for maximum performance.
+**Step A: GPU Setup (NVIDIA 30xx/40xx/50xx)**
 
 > [!IMPORTANT]
 > **Update your NVIDIA Drivers & Install CUDA Toolkit!**
@@ -110,55 +109,30 @@ Designed for NVIDIA 30xx/40xx/50xx series. Includes `lmdeploy` and `triton` for 
 >
 > To use `lmdeploy`, you **MUST** install the **NVIDIA GPU Computing Toolkit**: [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads).
 
-Run Makefile with GPU profile:
-
-```bash
-# Recommended:
-make setup-gpu
-```
-
-Manual installation:
-
-```bash
-uv sync
-```
-
-**Option B: For CPU Users**
-Lightweight installation with `llama-cpp-python` (CPU) and standard PyTorch (CPU).
-
-Run Makefile with CPU profile:
-
-```bash
-# Recommended:
-make setup-cpu
-```
-
-Manual installation:
-
-1. Delete the existing configuration:
-   ```bash
-   rm pyproject.toml  # Linux/macOS
-   # del pyproject.toml (Windows CMD)
-   ```
-2. Activate CPU configuration:
-   ```bash
-   mv pyproject.toml.cpu pyproject.toml # Linux/macOS
-   # ren pyproject.toml.cpu pyproject.toml (Windows CMD)
-   ```
-3. Install dependencies:
+1. Ensure [CUDA Toolkit 12.8](https://developer.nvidia.com/cuda-downloads) is installed.
+2. Run command:
    ```bash
    uv sync
    ```
 
-### 4. Run the Application
+**Step B: CPU Setup**
+1. Switch to CPU configuration:
+   ```bash
+   # Windows (CMD/PowerShell)
+   ren pyproject.toml pyproject.toml.bak
+   copy pyproject.toml.cpu pyproject.toml
+   
+   # Linux/macOS
+   mv pyproject.toml pyproject.toml.bak
+   cp pyproject.toml.cpu pyproject.toml
+   ```
+2. Run command:
+   ```bash
+   uv sync
+   ```
 
-Start the Gradio interface:
-
+**Step C: Run the Application**
 ```bash
-# Recommended:
-make demo
-
-# Manual:
 uv run gradio_app.py
 ```
 
@@ -267,20 +241,6 @@ Apache License 2.0
   howpublished = {\url{https://huggingface.co/pnnbao-ump/VieNeu-TTS}}
 }
 ```
-
-Please also cite the base model:
-
-```bibtex
-@misc{neuttsair2025,
-  title        = {NeuTTS Air: On-Device Speech Language Model with Instant Voice Cloning},
-  author       = {Neuphonic},
-  year         = {2025},
-  publisher    = {Hugging Face},
-  howpublished = {\url{https://huggingface.co/neuphonic/neutts-air}}
-}
-```
-
----
 
 ## 🤝 Contributing
 
