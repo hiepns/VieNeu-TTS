@@ -65,6 +65,51 @@ def get_available_devices() -> list[str]:
 
     return devices
 
+def get_model_status_message() -> str:
+    """Reconstruct status message from global state"""
+    global model_loaded, tts, using_lmdeploy, current_backbone, current_codec
+    if not model_loaded or tts is None:
+        return "⏳ Chưa tải model."
+    
+    backbone_config = BACKBONE_CONFIGS.get(current_backbone, {})
+    codec_config = CODEC_CONFIGS.get(current_codec, {})
+    
+    backend_name = "🚀 LMDeploy (Optimized)" if using_lmdeploy else "📦 Standard"
+    
+    # We don't track the exact device strings perfectly in global state, so we estimate
+    device_info = "GPU" if using_lmdeploy else "Auto"
+    codec_device = "CPU" if "ONNX" in (current_codec or "") else ("GPU/MPS" if torch.cuda.is_available() or torch.backends.mps.is_available() else "CPU")
+    
+    preencoded_note = "\n⚠️ Codec này cần sử dụng pre-encoded codes (.pt files)" if codec_config.get('use_preencoded') else ""
+    
+    opt_info = ""
+    if using_lmdeploy and hasattr(tts, 'get_optimization_stats'):
+        stats = tts.get_optimization_stats()
+        opt_info = (
+            f"\n\n🔧 Tối ưu hóa:"
+            f"\n  • Triton: {'✅' if stats['triton_enabled'] else '❌'}"
+            f"\n  • Max Batch Size (Default): {stats.get('max_batch_size', 'N/A')}"
+            f"\n  • Reference Cache: {stats['cached_references']} voices"
+            f"\n  • Prefix Caching: ✅"
+        )
+
+    return (
+        f"✅ Model đã tải thành công!\n\n"
+        f"🔧 Backend: {backend_name}\n"
+        f"🦜 Backbone: {current_backbone}\n"
+        f"🎵 Codec: {current_codec}{preencoded_note}{opt_info}"
+    )
+
+def restore_ui_state():
+    """Update UI components based on persistence"""
+    global model_loaded
+    msg = get_model_status_message()
+    return (
+        msg, 
+        gr.update(interactive=model_loaded), # btn_generate
+        gr.update(interactive=False)         # btn_stop
+    )
+
 def should_use_lmdeploy(backbone_choice: str, device_choice: str) -> bool:
     """Determine if we should use LMDeploy backend."""
     # LMDeploy not supported on macOS
@@ -106,6 +151,7 @@ def load_model(backbone_choice: str, codec_choice: str, device_choice: str,
     
     yield (
         "⏳ Đang tải model với tối ưu hóa... Lưu ý: Quá trình này sẽ tốn thời gian. Vui lòng kiên nhẫn.",
+        gr.update(interactive=False),
         gr.update(interactive=False),
         gr.update(interactive=False)
     )
@@ -260,17 +306,15 @@ def load_model(backbone_choice: str, codec_choice: str, device_choice: str,
                  f"💡 Hệ thống đã tự động chuyển về chế độ Standard (chậm hơn)."
              )
 
-        success_msg = (
-            f"✅ Model đã tải thành công!\n\n"
-            f"🔧 Backend: {backend_name}\n"
-            f"🦜 Model Device: {device_info.upper()}\n"
-            f"🎵 Codec Device: {codec_device.upper()}{preencoded_note}\n"
-        )
-        
+        success_msg = get_model_status_message()
+        if warning_msg:
+            success_msg += warning_msg
+            
         yield (
             success_msg,
-            gr.update(interactive=True),
-            gr.update(interactive=True)
+            gr.update(interactive=True), # btn_generate
+            gr.update(interactive=True), # btn_load
+            gr.update(interactive=False) # btn_stop
         )
         
     except Exception as e:
@@ -283,13 +327,15 @@ def load_model(backbone_choice: str, codec_choice: str, device_choice: str,
             yield (
                 "❌ Lỗi khi tải model: Không tìm thấy biến môi trường CUDA_PATH. Vui lòng cài đặt NVIDIA GPU Computing Toolkit (https://developer.nvidia.com/cuda/toolkit)",
                 gr.update(interactive=False),
-                gr.update(interactive=True)
+                gr.update(interactive=True),
+                gr.update(interactive=False)
             )
         else: 
             yield (
                 f"❌ Lỗi khi tải model: {str(e)}",
                 gr.update(interactive=False),
-                gr.update(interactive=True)
+                gr.update(interactive=True),
+                gr.update(interactive=False)
             )
 
 
@@ -822,7 +868,9 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                 # State to track current mode (replaces unreliable Textbox/Tabs input)
                 current_mode_state = gr.State("preset_mode")
                 
-                btn_generate = gr.Button("🎵 Bắt đầu", variant="primary", size="lg", interactive=False)
+                with gr.Row():
+                    btn_generate = gr.Button("🎵 Bắt đầu", variant="primary", scale=2, interactive=False)
+                    btn_stop = gr.Button("⏹️ Dừng", variant="stop", scale=1, interactive=False)
             
             # --- OUTPUT ---
             with gr.Column(scale=2):
@@ -832,6 +880,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                     autoplay=True
                 )
                 status_output = gr.Textbox(label="Trạng thái", elem_classes="status-box")
+                gr.Markdown("<div style='text-align: center; color: #64748b; font-size: 0.8rem;'>🔒 Audio được đóng dấu bản quyền ẩn (Watermarker) để bảo mật và định danh AI.</div>")
         
         # # --- EVENT HANDLERS ---
         # def update_info(backbone: str) -> str:
@@ -859,13 +908,28 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
         btn_load.click(
             fn=load_model,
             inputs=[backbone_select, codec_select, device_choice, use_lmdeploy_cb],
-            outputs=[model_status, btn_generate, btn_load]
+            outputs=[model_status, btn_generate, btn_load, btn_stop]
         )
         
-        btn_generate.click(
+        generate_event = btn_generate.click(
             fn=synthesize_speech,
             inputs=[text_input, voice_select, custom_audio, custom_text, current_mode_state, generation_mode, use_batch, max_batch_size_run],
             outputs=[audio_output, status_output]
+        )
+        
+        # When generation starts, enable stop button
+        btn_generate.click(lambda: gr.update(interactive=True), outputs=btn_stop)
+        # When generation ends/stops, disable stop button
+        generate_event.then(lambda: gr.update(interactive=False), outputs=btn_stop)
+        
+        btn_stop.click(fn=None, cancels=[generate_event])
+        btn_stop.click(lambda: (None, "⏹️ Đã dừng tạo giọng nói."), outputs=[audio_output, status_output])
+        btn_stop.click(lambda: gr.update(interactive=False), outputs=btn_stop)
+
+        # Persistence: Restore UI state on load
+        demo.load(
+            fn=restore_ui_state,
+            outputs=[model_status, btn_generate, btn_stop]
         )
 
 if __name__ == "__main__":

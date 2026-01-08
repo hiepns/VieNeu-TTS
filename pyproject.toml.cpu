@@ -31,6 +31,7 @@ dependencies = [
     "onnxruntime>=1.23.2",
     "datasets>=3.2.0",
     "llama-cpp-python>=0.3.16",
+    "perth>=0.2.0",
 ]
 
 [tool.uv.sources]

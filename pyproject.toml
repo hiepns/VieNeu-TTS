@@ -39,6 +39,8 @@ dependencies = [
     "torch",
     "torchvision",
     "torchaudio",
+    "llama-cpp-python>=0.3.16",
+    "perth>=0.2.0",
 ]
 
 [tool.uv.sources]

@@ -120,6 +120,14 @@ class VieNeuTTS:
         # Load models
         self._load_backbone(backbone_repo, backbone_device)
         self._load_codec(codec_repo, codec_device)
+
+        # Load watermarker (optional)
+        try:
+            import perth
+            self.watermarker = perth.PerthImplicitWatermarker()
+            print("   🔒 Audio watermarking initialized (Perth)")
+        except (ImportError, AttributeError):
+            self.watermarker = None
     
     def _load_backbone(self, backbone_repo, backbone_device):
         # MPS device validation
@@ -215,6 +223,10 @@ class VieNeuTTS:
 
         # Decode
         wav = self._decode(output_str)
+
+        # Apply watermark if available
+        if self.watermarker:
+            wav = self.watermarker.apply_watermark(wav, sample_rate=self.sample_rate)
 
         return wav
 
@@ -483,6 +495,14 @@ class FastVieNeuTTS:
         self._load_backbone_lmdeploy(backbone_repo, memory_util, tp, enable_prefix_caching, quant_policy)
         self._load_codec(codec_repo, codec_device, enable_triton)
 
+        # Load watermarker (optional)
+        try:
+            import perth
+            self.watermarker = perth.PerthImplicitWatermarker()
+            print("   🔒 Audio watermarking initialized (Perth)")
+        except (ImportError, AttributeError):
+            self.watermarker = None
+
         self._warmup_model()
         
         print("✅ FastVieNeuTTS with optimizations loaded successfully!")
@@ -709,6 +729,10 @@ class FastVieNeuTTS:
         # Decode to audio
         wav = self._decode(output_str)
         
+        # Apply watermark if available
+        if self.watermarker:
+            wav = self.watermarker.apply_watermark(wav, sample_rate=self.sample_rate)
+            
         return wav
     
     def infer_batch(self, texts: list[str], ref_codes: np.ndarray | torch.Tensor, ref_text: str, max_batch_size: int = None) -> list[np.ndarray]:
@@ -738,6 +762,11 @@ class FastVieNeuTTS:
                 batch_wavs = self._decode_batch(batch_codes)
             else:
                 batch_wavs = [self._decode(codes) for codes in batch_codes]
+            
+            # Apply watermark if available
+            if self.watermarker:
+                batch_wavs = [self.watermarker.apply_watermark(w, sample_rate=self.sample_rate) for w in batch_wavs]
+                
             all_wavs.extend(batch_wavs)
             
             if i + max_batch_size < len(texts):
