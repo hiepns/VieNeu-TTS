@@ -790,7 +790,11 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
         # --- CONFIGURATION ---
         with gr.Group():
             with gr.Row():
-                backbone_select = gr.Dropdown(list(BACKBONE_CONFIGS.keys()), value="VieNeu-TTS (GPU)", label="🦜 Backbone")
+                backbone_select = gr.Dropdown(
+                    list(BACKBONE_CONFIGS.keys()), 
+                    value="VieNeu-TTS (GPU)", 
+                    label="🦜 Backbone"
+                )
                 codec_select = gr.Dropdown(list(CODEC_CONFIGS.keys()), value="NeuCodec (Distill)", label="🎵 Codec")
                 device_choice = gr.Radio(get_available_devices(), value="Auto", label="🖥️ Device")
             
@@ -810,13 +814,13 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                     <div class="warning-banner-item">
                         <strong>🐢 Hệ máy CPU</strong>
                         <div class="warning-banner-content">
-                            Sử dụng <b>VieNeu-TTS-0.3B-q4-gguf</b> để đạt tốc độ xử lý nhanh nhất.
+                            Sử dụng <b>VieNeu-TTS-0.3B-q4-gguf</b> để đạt tốc độ xử lý nhanh nhất. Nếu ưu tiên độ chính xác thì dùng <b>VieNeu-TTS-q8-gguf</b>.
                         </div>
                     </div>
                     <div class="warning-banner-item">
                         <strong>🐆 Hệ máy GPU</strong>
                         <div class="warning-banner-content">
-                            Chọn <b>VieNeu-TTS-0.3B (GPU)</b> để x2 tốc độ (Chất lượng ~90% so với bản gốc).
+                            Chọn <b>VieNeu-TTS-0.3B (GPU)</b> để x2 tốc độ (Chất lượng ~90% so với bản gốc). Nếu ưu tiên độ chính xác thì dùng <b>VieNeu-TTS (GPU)</b>.
                         </div>
                     </div>
                 </div>
