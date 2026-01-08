@@ -8,7 +8,11 @@
 
 **VieNeu-TTS** is an advanced on-device Vietnamese Text-to-Speech (TTS) model with **instant voice cloning**.
 
-Trained on ~1000 hours of high-quality Vietnamese speech, this model represents a significant upgrade from VieNeu-TTS-140h with the following improvements:
+This project features two core architectures trained on the [VieNeu-TTS-1000h](https://huggingface.co/datasets/pnnbao-ump/VieNeu-TTS-1000h) dataset:
+- **VieNeu-TTS (0.5B):** An enhanced model fine-tuned from the NeuTTS Air architecture for maximum stability.
+- **VieNeu-TTS-0.3B:** A specialized model **trained from scratch**, delivering 2x faster inference and ultra-low latency.
+
+These represent a significant upgrade from the previous VieNeu-TTS-140h with the following improvements:
 
 - **Enhanced pronunciation**: More accurate and stable Vietnamese pronunciation
 - **Code-switching support**: Seamless transitions between Vietnamese and English
