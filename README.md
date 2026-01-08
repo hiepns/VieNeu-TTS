@@ -16,7 +16,7 @@ Trained on ~1000 hours of high-quality Vietnamese speech, this model represents 
 - **Real-time synthesis**: 24 kHz waveform generation on CPU or GPU
 - **Multiple model formats**: Support for PyTorch, GGUF Q4/Q8 (CPU optimized), and ONNX codec
 
-VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
+VieNeu-TTS delivers production-ready speech synthesis fully offline.
 
 **Author:** Phạm Nguyễn Ngọc Bảo
 
@@ -28,20 +28,23 @@ VieNeu-TTS-1000h delivers production-ready speech synthesis fully offline.
 
 ## 🔬 Model Overview
 
-- **Backbone:** Qwen 0.5B LLM (chat template)
+- **Backbone:** 
+  - **VieNeu-TTS (0.5B):** Qwen-0.5B fine-tuned from [NeuTTS Air](https://huggingface.co/neuphonic/neutts-air).
+  - **VieNeu-TTS-0.3B:** Custom 0.3B model **trained from scratch**, optimized for extreme speed (2x faster).
 - **Audio codec:** NeuCodec (torch implementation; ONNX & quantized variants supported)
-- **Context window:** 2 048 tokens shared by prompt text and speech tokens
+- **Context window:** 2,048 tokens shared by prompt text and speech tokens
 - **Output watermark:** Enabled by default
-- **Training data:**
-  - [VieNeu-TTS-1000h](https://huggingface.co/datasets/pnnbao-ump/VieNeu-TTS-1000h) — 443,641 curated Vietnamese samples
+- **Training data:** [VieNeu-TTS-1000h](https://huggingface.co/datasets/pnnbao-ump/VieNeu-TTS-1000h) — 443,641 curated Vietnamese samples (Used for both versions).
 
 ### Model Variants
 
-| Model              | Format  | Device  | Quality    | Speed                   | Streaming |
-| ------------------ | ------- | ------- | ---------- | ----------------------- | --------- |
-| VieNeu-TTS         | PyTorch | GPU/CPU | ⭐⭐⭐⭐⭐ | Very Fast with lmdeploy | ❌        |
-| VieNeu-TTS-q8-gguf | GGUF Q8 | CPU/GPU | ⭐⭐⭐⭐   | Fast                    | ✅        |
-| VieNeu-TTS-q4-gguf | GGUF Q4 | CPU/GPU | ⭐⭐⭐     | Very Fast               | ✅        |
+| Model                   | Format  | Device  | Quality    | Speed                   |
+| ----------------------- | ------- | ------- | ---------- | ----------------------- |
+| VieNeu-TTS              | PyTorch | GPU/CPU | ⭐⭐⭐⭐⭐ | Very Fast with lmdeploy |
+| VieNeu-TTS-0.3B         | PyTorch | GPU/CPU | ⭐⭐⭐⭐   | **Ultra Fast (2x)**     |
+| VieNeu-TTS-q8-gguf      | GGUF Q8 | CPU/GPU | ⭐⭐⭐⭐   | Fast                    |
+| VieNeu-TTS-q4-gguf      | GGUF Q4 | CPU/GPU | ⭐⭐⭐     | Very Fast               |
+| VieNeu-TTS-0.3B-q4-gguf | GGUF Q4 | CPU/GPU | ⭐⭐⭐     | **Extreme Speed (2x)**  |
 
 **Recommendations:**
 
@@ -266,7 +269,7 @@ Contributions are welcome!
 
 ## 🙏 Acknowledgements
 
-This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-air) by Neuphonic. Huge thanks to the team for open-sourcing such a powerful base model.
+This project builds upon [NeuTTS Air](https://huggingface.co/neuphonic/neutts-air) for the original 0.5B model. The 0.3B version is a custom architecture trained from scratch using the [VieNeu-TTS-1000h](https://huggingface.co/datasets/pnnbao-ump/VieNeu-TTS-1000h) dataset.
 
 ---
 

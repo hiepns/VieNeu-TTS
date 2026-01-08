@@ -36,7 +36,6 @@ dependencies = [
     "triton; sys_platform == 'linux'",
     "transformers; sys_platform == 'darwin'",
     "accelerate; sys_platform == 'darwin'",
-    
     "torch",
     "torchvision",
     "torchaudio",

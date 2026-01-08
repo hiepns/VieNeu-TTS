@@ -136,7 +136,7 @@ class VieNeuTTS:
             except ImportError as e:
                 raise ImportError(
                     "Failed to import `llama_cpp`. "
-                    "Xem hướng dẫn cài đặt llama_cpp_python tại: https://github.com/pnnbao97/VieNeu-TTS"
+                    "Xem hướng dẫn cài đặt llama_cpp_python phiên bản tối thiểu 0.3.16 tại: https://llama-cpp-python.readthedocs.io/en/latest/"
                 ) from e
             self.backbone = Llama.from_pretrained(
                 repo_id=backbone_repo,
@@ -171,7 +171,7 @@ class VieNeuTTS:
             case "neuphonic/distill-neucodec":
                 self.codec = DistillNeuCodec.from_pretrained(codec_repo)
                 self.codec.eval().to(codec_device)
-            case "neuphonic/neucodec-onnx-decoder":
+            case "neuphonic/neucodec-onnx-decoder-int8":
                 if codec_device != "cpu":
                     raise ValueError("Onnx decoder only currently runs on CPU.")
                 try:
@@ -298,7 +298,7 @@ class VieNeuTTS:
                 max_length=self.max_context,
                 eos_token_id=speech_end_id,
                 do_sample=True,
-                temperature=1.0,
+                temperature=0.7,
                 top_k=50,
                 use_cache=True,
                 min_new_tokens=50,
@@ -321,7 +321,7 @@ class VieNeuTTS:
         output = self.backbone(
             prompt,
             max_tokens=self.max_context,
-            temperature=1.0,
+            temperature=0.7,
             top_k=50,
             stop=["<|SPEECH_GENERATION_END|>"],
         )
@@ -346,7 +346,7 @@ class VieNeuTTS:
         for item in self.backbone(
             prompt,
             max_tokens=self.max_context,
-            temperature=1.0,
+            temperature=0.7,
             top_k=50,
             stop=["<|SPEECH_GENERATION_END|>"],
             stream=True
@@ -513,7 +513,7 @@ class FastVieNeuTTS:
         self.gen_config = GenerationConfig(
             top_p=0.95,
             top_k=50,
-            temperature=1.0,
+            temperature=0.7,
             max_new_tokens=2048,
             do_sample=True,
             min_new_tokens=40,
@@ -536,7 +536,7 @@ class FastVieNeuTTS:
             case "neuphonic/distill-neucodec":
                 self.codec = DistillNeuCodec.from_pretrained(codec_repo)
                 self.codec.eval().to(codec_device)
-            case "neuphonic/neucodec-onnx-decoder":
+            case "neuphonic/neucodec-onnx-decoder-int8":
                 if codec_device != "cpu":
                     raise ValueError("ONNX decoder only runs on CPU")
                 try:
@@ -714,15 +714,6 @@ class FastVieNeuTTS:
     def infer_batch(self, texts: list[str], ref_codes: np.ndarray | torch.Tensor, ref_text: str, max_batch_size: int = None) -> list[np.ndarray]:
         """
         Batch inference for multiple texts.
-        
-        Args:
-            texts: List of input texts to synthesize
-            ref_codes: Encoded reference audio codes
-            ref_text: Reference text for reference audio
-            max_batch_size: Maximum chunks to process at once (prevent GPU overload)
-            
-        Returns:
-            List of generated speech waveforms
         """
         if max_batch_size is None:
             max_batch_size = self.max_batch_size
@@ -737,29 +728,18 @@ class FastVieNeuTTS:
         
         all_wavs = []
         
-        # Process in smaller batches to avoid GPU OOM
         for i in range(0, len(texts), max_batch_size):
             batch_texts = texts[i:i+max_batch_size]
-            
-            # Format prompts for this batch
             prompts = [self._format_prompt(ref_codes, ref_text, text) for text in batch_texts]
-            
-            # Batch generation with LMDeploy
             responses = self.backbone(prompts, gen_config=self.gen_config, do_preprocess=False)
-            
-            # Decode outputs (with smart parallelization)
             batch_codes = [response.text for response in responses]
             
-            # Auto-tune parallel workers based on batch size
             if len(batch_codes) > 3:
                 batch_wavs = self._decode_batch(batch_codes)
             else:
-                # Sequential for small batches (less overhead)
                 batch_wavs = [self._decode(codes) for codes in batch_codes]
-            
             all_wavs.extend(batch_wavs)
             
-            # Clean up memory between batches
             if i + max_batch_size < len(texts):
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
@@ -871,6 +851,7 @@ class FastVieNeuTTS:
         """
         return {
             'triton_enabled': self._triton_enabled,
+            'max_batch_size': self.max_batch_size,
             'cached_references': len(self._ref_cache),
             'active_sessions': len(self.stored_dict),
             'kv_quant': self.gen_config.__dict__.get('quant_policy', 0),
