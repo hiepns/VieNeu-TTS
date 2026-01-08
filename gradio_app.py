@@ -814,13 +814,13 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                     <div class="warning-banner-item">
                         <strong>🐢 Hệ máy CPU</strong>
                         <div class="warning-banner-content">
-                            Sử dụng <b>VieNeu-TTS-0.3B-q4-gguf</b> để đạt tốc độ xử lý nhanh nhất. Nếu ưu tiên độ chính xác thì dùng <b>VieNeu-TTS-q8-gguf</b>.
+                            Sử dụng <b>VieNeu-TTS-0.3B-q4-gguf</b> để đạt tốc độ xử lý nhanh nhất. Nếu ưu tiên độ chính xác thì dùng <b>VieNeu-TTS-0.3B-q8-gguf</b>.
                         </div>
                     </div>
                     <div class="warning-banner-item">
                         <strong>🐆 Hệ máy GPU</strong>
                         <div class="warning-banner-content">
-                            Chọn <b>VieNeu-TTS-0.3B (GPU)</b> để x2 tốc độ (Chất lượng ~90% so với bản gốc). Nếu ưu tiên độ chính xác thì dùng <b>VieNeu-TTS (GPU)</b>.
+                            Chọn <b>VieNeu-TTS-0.3B (GPU)</b> để x2 tốc độ (Chất lượng ~95% so với bản gốc).
                         </div>
                     </div>
                 </div>

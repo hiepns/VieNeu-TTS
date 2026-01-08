@@ -23,6 +23,10 @@ backbone_configs:
     repo: pnnbao-ump/VieNeu-TTS-0.3B-q4-gguf
     supports_streaming: true
     description: Phiên bản cực nhẹ, chạy mượt trên CPU
+  "VieNeu-TTS-0.3B-q8-gguf":
+    repo: pnnbao-ump/VieNeu-TTS-0.3B-q8-gguf
+    supports_streaming: true
+    description: Phiên bản 0.3B nén Q8, chất lượng cao và tốc độ nhanh trên CPU
 
 codec_configs:
   "NeuCodec (Standard)":
