@@ -750,7 +750,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
             
             with gr.Row():
                 use_lmdeploy_cb = gr.Checkbox(
-                    value=False, 
+                    value=True, 
                     label="🚀 Optimize with LMDeploy (Khuyên dùng cho NVIDIA GPU)",
                     info="Tick nếu bạn dùng GPU để tăng tốc độ tổng hợp đáng kể."
                 )
@@ -833,11 +833,11 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                 )
                 status_output = gr.Textbox(label="Trạng thái", elem_classes="status-box")
         
-        # --- EVENT HANDLERS ---
-        def update_info(backbone: str) -> str:
-            return f"Streaming: {'✅' if BACKBONE_CONFIGS[backbone]['supports_streaming'] else '❌'}"
+        # # --- EVENT HANDLERS ---
+        # def update_info(backbone: str) -> str:
+        #     return f"Streaming: {'✅' if BACKBONE_CONFIGS[backbone]['supports_streaming'] else '❌'}"
         
-        backbone_select.change(update_info, backbone_select, model_status)
+        # backbone_select.change(update_info, backbone_select, model_status)
         backbone_select.change(update_voice_dropdown, [backbone_select, voice_select], voice_select)
         
         # Handler to show/hide Voice Cloning tab
