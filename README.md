@@ -234,17 +234,20 @@ VieNeu-TTS/
 
 ## 📄 License
 
-Apache License 2.0
+- **VieNeu-TTS (0.5B):** Original terms (Apache 2.0).
+- **VieNeu-TTS-0.3B:** Released under **CC BY-NC 4.0** (Non-Commercial). 
+  - This version is currently **experimental**.
+  - **Commercial use is prohibited** without authorization. Please contact the author for commercial licensing.
 
 ---
 
 ## 📑 Citation
 
 ```bibtex
-@misc{vieneutts2025,
+@misc{vieneutts2026,
   title        = {VieNeu-TTS: Vietnamese Text-to-Speech with Instant Voice Cloning},
   author       = {Pham Nguyen Ngoc Bao},
-  year         = {2025},
+  year         = {2026},
   publisher    = {Hugging Face},
   howpublished = {\url{https://huggingface.co/pnnbao-ump/VieNeu-TTS}}
 }
