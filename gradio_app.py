@@ -792,7 +792,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
             with gr.Row():
                 backbone_select = gr.Dropdown(
                     list(BACKBONE_CONFIGS.keys()), 
-                    value="VieNeu-TTS-0.3B (GPU)", 
+                    value="VieNeu-TTS (GPU)", 
                     label="🦜 Backbone"
                 )
                 codec_select = gr.Dropdown(list(CODEC_CONFIGS.keys()), value="NeuCodec (Distill)", label="🎵 Codec")
@@ -820,7 +820,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                     <div class="warning-banner-item">
                         <strong>🐆 Hệ máy GPU</strong>
                         <div class="warning-banner-content">
-                            Chọn <b>VieNeu-TTS-0.3B (GPU)</b> để x2 tốc độ.
+                            Chọn <b>VieNeu-TTS-0.3B (GPU)</b> để x2 tốc độ (độ chính xác ~95% bản gốc).
                         </div>
                     </div>
                 </div>
