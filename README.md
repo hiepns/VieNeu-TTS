@@ -114,20 +114,24 @@ This is the fastest and most reliable way to manage dependencies.
 uv sync
 ```
 
-**[Optional] Enable GPU Acceleration for GGUF Models:**
-Mặc dù `llama-cpp-python` đã được bao gồm trong `pyproject.toml`, nhưng theo mặc định nó là bản dành cho CPU để đảm bảo tính tương thích. Nếu bạn muốn chạy các model GGUF nhanh hơn trên GPU, hãy cài đặt bản CUDA:
+### 🎛️ GGUF GPU Acceleration (Optional)
 
-- **Cách 1: Sử dụng Pre-built Wheel (Windows Python 3.12 - KHUYÊN DÙNG)**
-  ```bash
-  uv pip install "https://github.com/pnnbao97/VieNeu-TTS/releases/download/wheels-v0.3.16/llama_cpp_python-0.3.16-cp312-cp312-win_amd64_cu124.whl" --force-reinstall
-  ```
+> [!TIP]
+> Although `llama-cpp-python` is pre-installed via `pyproject.toml`, it is the **CPU** version by default to ensure the application always starts correctly. To leverage GPU power for GGUF models, use one of the following methods:
 
-- **Cách 2: Tự biên dịch (Yêu cầu Visual Studio C++ & CUDA Toolkit)**
-  ```bash
-  # Windows (PowerShell)
-  $env:CMAKE_ARGS="-DGGML_CUDA=on"
-  uv pip install "llama-cpp-python>=0.3.16" --force-reinstall --no-cache-dir
-  ```
+#### **Method 1: Use Pre-built Wheel (Windows Python 3.12 - RECOMMENDED)**
+Run this command to replace the CPU version with the optimized CUDA wheel:
+```bash
+uv pip install "https://github.com/pnnbao97/VieNeu-TTS/releases/download/wheels-v0.3.16/llama_cpp_python-0.3.16-cp312-cp312-win_amd64_cu124.whl" --force-reinstall
+```
+
+#### **Method 2: Compile from Source**
+For other CUDA versions or operating systems (Requires Visual Studio C++ & CUDA Toolkit):
+```bash
+# Windows (PowerShell)
+$env:CMAKE_ARGS="-DGGML_CUDA=on"
+uv pip install "llama-cpp-python>=0.3.16" --force-reinstall --no-cache-dir
+```
 
 **Option B: For CPU-only Users**
 
