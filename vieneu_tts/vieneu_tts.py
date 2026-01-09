@@ -312,7 +312,7 @@ class VieNeuTTS:
                 max_length=self.max_context,
                 eos_token_id=speech_end_id,
                 do_sample=True,
-                temperature=0.7,
+                temperature=1.0,
                 top_k=50,
                 use_cache=True,
                 min_new_tokens=50,
@@ -335,7 +335,7 @@ class VieNeuTTS:
         output = self.backbone(
             prompt,
             max_tokens=self.max_context,
-            temperature=0.7,
+            temperature=1.0,
             top_k=50,
             stop=["<|SPEECH_GENERATION_END|>"],
         )
@@ -360,7 +360,7 @@ class VieNeuTTS:
         for item in self.backbone(
             prompt,
             max_tokens=self.max_context,
-            temperature=0.7,
+            temperature=1.0,
             top_k=50,
             stop=["<|SPEECH_GENERATION_END|>"],
             stream=True
@@ -535,7 +535,7 @@ class FastVieNeuTTS:
         self.gen_config = GenerationConfig(
             top_p=0.95,
             top_k=50,
-            temperature=0.7,
+            temperature=1.0,
             max_new_tokens=2048,
             do_sample=True,
             min_new_tokens=40,
