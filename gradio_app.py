@@ -80,7 +80,7 @@ def get_model_status_message() -> str:
     device_info = "GPU" if using_lmdeploy else "Auto"
     codec_device = "CPU" if "ONNX" in (current_codec or "") else ("GPU/MPS" if torch.cuda.is_available() or torch.backends.mps.is_available() else "CPU")
     
-    preencoded_note = "\n⚠️ Codec này cần sử dụng pre-encoded codes (.pt files)" if codec_config.get('use_preencoded') else ""
+    preencoded_note = "\n⚠️ Codec ONNX không hỗ trợ chức năng clone giọng nói." if codec_config.get('use_preencoded') else ""
     
     opt_info = ""
     if using_lmdeploy and hasattr(tts, 'get_optimization_stats'):
@@ -846,8 +846,17 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                         voice_select = gr.Dropdown(initial_voices, value=default_voice, label="Giọng mẫu")
                     
                     with gr.TabItem("🦜 Voice Cloning", id="custom_mode") as tab_custom:
-                        custom_audio = gr.Audio(label="Audio giọng mẫu (10-15 giây) (.wav)", type="filepath")
+                        custom_audio = gr.Audio(label="Audio giọng mẫu (3-5 giây) (.wav)", type="filepath")
                         custom_text = gr.Textbox(label="Nội dung audio mẫu - vui lòng gõ đúng nội dung của audio mẫu - kể cả dấu câu vì model rất nhạy cảm với dấu câu (.,?!)")
+                        gr.Examples(
+                            examples=[
+                                [os.path.join("examples", "audio_ref", "example.wav"), "Ví dụ 2. Tính trung bình của dãy số."],
+                                [os.path.join("examples", "audio_ref", "example_2.wav"), "Trên thực tế, các nghi ngờ đã bắt đầu xuất hiện."]
+                            ],
+                            inputs=[custom_audio, custom_text],
+                            label="Ví dụ mẫu để thử nghiệm clone giọng"
+                        )
+
                 
                 generation_mode = gr.Radio(
                     ["Standard (Một lần)"],
