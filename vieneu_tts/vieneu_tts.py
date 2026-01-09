@@ -255,7 +255,9 @@ class VieNeuTTS:
         if len(speech_ids) == 0:
             raise ValueError(
                 "No valid speech tokens found in the output. "
-                "The model may not have generated proper speech tokens."
+                "Lỗi này có thể do GPU của bạn không hỗ trợ định dạng bfloat16 (ví dụ: dòng T4, RTX 20-series) "
+                "dẫn đến sai số khi tính toán. Bạn hãy thử chuyển sang dùng phiên bản GGUF Q4/Q8 hoặc "
+                "bỏ chọn 'LMDeploy' trong Tùy chọn nâng cao."
             )
         
         # Onnx decode
@@ -645,7 +647,12 @@ class FastVieNeuTTS:
         speech_ids = [int(num) for num in re.findall(r"<\|speech_(\d+)\|>", codes)]
         
         if len(speech_ids) == 0:
-            raise ValueError("No valid speech tokens found in output")
+            raise ValueError(
+                "No valid speech tokens found in the output. "
+                "Lỗi này có thể do GPU của bạn không hỗ trợ định dạng bfloat16 (ví dụ: dòng T4, RTX 20-series) "
+                "khiến mô hình chạy không ổn định trên LMDeploy (Turbomind). Bạn hãy thử bỏ chọn 'LMDeploy' "
+                "trong Tùy chọn nâng cao hoặc chuyển sang dùng phiên bản GGUF Q4/Q8 để chạy ổn định hơn."
+            )
         
         if self._is_onnx_codec:
             codes = np.array(speech_ids, dtype=np.int32)[np.newaxis, np.newaxis, :]
