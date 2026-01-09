@@ -371,8 +371,27 @@ class VietnameseTTSNormalizer:
         text = text.replace('+', ' cộng ')
         text = text.replace('=', ' bằng ')
         text = text.replace('#', ' thăng ')
+        # Handle parentheses/brackets as natural pauses: (text) -> , text ,
+        text = re.sub(r'[\(\[\{]\s*(.*?)\s*[\)\]\}]', r', \1 , ', text)
+        
+        # Remaining individual brackets or parens
         text = re.sub(r'[\[\]\(\)\{\}]', ' ', text)
-        text = re.sub(r'\s+[-–—]+\s+', ' ', text)
+        
+        # Paired dashes (like parentheses): - text - -> , text ,
+        text = re.sub(r'(?:\s+|^)[-–—]\s*(.*?)\s*[-–—](?:\s+|$)', r', \1 , ', text)
+        
+        # Single dashes used as punctuation (with spaces) -> comma
+        text = re.sub(r'\s+[-–—]+\s+', ', ', text)
+        
+        # Dashes at the start of a line (bullet points) -> comma
+        text = re.sub(r'^[-–—]+\s+', ', ', text)
+        
+        # Any remaining dashes (like text-to-speech) -> space
+        text = re.sub(r'[-–—]', ' ', text)
+        
+        # Collapse multiple commas and surrounding spaces
+        text = re.sub(r'\s*,\s*(,\s*)*', ', ', text)
+        
         text = re.sub(r'\.{2,}', ' ', text)
         text = re.sub(r'\s+\.\s+', ' ', text)
         text = re.sub(r'[^\w\sàáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ.,!?;:@%_]', ' ', text)
