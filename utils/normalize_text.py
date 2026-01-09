@@ -367,12 +367,20 @@ class VietnameseTTSNormalizer:
     
     def _normalize_special_chars(self, text):
         """Handle special characters."""
+        # Remove quotes first to avoid creating spaces before commas
+        text = text.replace('"', '')
+        text = text.replace("'", '')
+        text = text.replace(''', '')
+        text = text.replace(''', '')
+        text = text.replace('"', '')
+        text = text.replace('"', '')
+        
         text = text.replace('&', ' và ')
         text = text.replace('+', ' cộng ')
         text = text.replace('=', ' bằng ')
         text = text.replace('#', ' thăng ')
         # Handle parentheses/brackets as natural pauses: (text) -> , text ,
-        text = re.sub(r'[\(\[\{]\s*(.*?)\s*[\)\]\}]', r', \1 , ', text)
+        text = re.sub(r'[\(\[\{]\s*(.*?)\s*[\)\]\}]', r', \1, ', text)
         
         # Remaining individual brackets or parens
         text = re.sub(r'[\[\]\(\)\{\}]', ' ', text)
@@ -386,8 +394,9 @@ class VietnameseTTSNormalizer:
         # Dashes at the start of a line (bullet points) -> comma
         text = re.sub(r'^[-–—]+\s+', ', ', text)
         
-        # Collapse multiple commas and surrounding spaces
-        text = re.sub(r'\s*,\s*(,\s*)*', ', ', text)
+        # Collapse multiple commas and surrounding spaces (remove spaces before AND after commas)
+        text = re.sub(r'\s*,\s*', ', ', text)
+        text = re.sub(r',\s*,+', ',', text)  # Remove duplicate commas
         
         text = re.sub(r'\.{2,}', ' ', text)
         text = re.sub(r'\s+\.\s+', ' ', text)
@@ -405,11 +414,7 @@ if __name__ == "__main__":
     normalizer = VietnameseTTSNormalizer()
     
     test_texts = [
-        "Chào mừng <en>hello world</en> đến với AI",
-        "Công nghệ <en>machine learning</en> và <en>deep learning</en>",
-        "Giá 2.500.000đ với <en>discount</en> 50%",
-        "Nhiệt độ 25°C, <en>temperature</en> cao",
-        "Hệ thống <en>text-to-speech</en> tiếng Việt",
+        "Chỉ cần thay đổi một dấu thanh, ý nghĩa của từ đã hoàn toàn khác biệt. Ví dụ như \"ma\", \"má\", \"mà\", \"mả\", \"mã\", \"mạ\" – đây chính là \"bài toán khó\" mà các kỹ sư công nghệ phải giải quyết để tạo ra một giọng đọc tự nhiên như người bản xứ."
     ]
     
     print("=" * 80)
