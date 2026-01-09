@@ -114,25 +114,6 @@ This is the fastest and most reliable way to manage dependencies.
 uv sync
 ```
 
-**🎛️ GGUF GPU Acceleration (Optional)**
-
-> [!TIP]
-> Although `llama-cpp-python` is pre-installed via `pyproject.toml`, it is the **CPU** version by default to ensure the application always starts correctly. To leverage GPU power for GGUF models, use one of the following methods:
-
-**1. Use Pre-built Wheel (Windows Python 3.12 - RECOMMENDED)**
-Run this command to replace the CPU version with the optimized CUDA wheel:
-```bash
-uv pip install "https://github.com/pnnbao97/VieNeu-TTS/releases/download/wheels-v0.3.16/llama_cpp_python-0.3.16-cp312-cp312-win_amd64_cu124.whl" --force-reinstall
-```
-
-**2. Compile from Source**
-For other CUDA versions or operating systems (Requires Visual Studio C++ & CUDA Toolkit):
-```bash
-# Windows (PowerShell)
-$env:CMAKE_ARGS="-DGGML_CUDA=on"
-uv pip install "llama-cpp-python>=0.3.16" --force-reinstall --no-cache-dir
-```
-
 **Option B: For CPU-only Users**
 
 1. Switch to CPU configuration:
