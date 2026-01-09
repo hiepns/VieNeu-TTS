@@ -114,6 +114,21 @@ This is the fastest and most reliable way to manage dependencies.
 uv sync
 ```
 
+**[Optional] Enable GPU Acceleration for GGUF Models:**
+Mặc dù `llama-cpp-python` đã được bao gồm trong `pyproject.toml`, nhưng theo mặc định nó là bản dành cho CPU để đảm bảo tính tương thích. Nếu bạn muốn chạy các model GGUF nhanh hơn trên GPU, hãy cài đặt bản CUDA:
+
+- **Cách 1: Sử dụng Pre-built Wheel (Windows Python 3.12 - KHUYÊN DÙNG)**
+  ```bash
+  uv pip install "https://github.com/pnnbao97/VieNeu-TTS/releases/download/wheels-v0.3.16/llama_cpp_python-0.3.16-cp312-cp312-win_amd64_cu124.whl" --force-reinstall
+  ```
+
+- **Cách 2: Tự biên dịch (Yêu cầu Visual Studio C++ & CUDA Toolkit)**
+  ```bash
+  # Windows (PowerShell)
+  $env:CMAKE_ARGS="-DGGML_CUDA=on"
+  uv pip install "llama-cpp-python>=0.3.16" --force-reinstall --no-cache-dir
+  ```
+
 **Option B: For CPU-only Users**
 
 1. Switch to CPU configuration:
@@ -150,14 +165,7 @@ Best if you have `make` installed (standard on Linux/macOS, or via Git Bash on W
 
 Then access the Web UI at `http://127.0.0.1:7860`.
 
-**Optional dependencies:**
-
-- **For GGUF models (GPU):**
-  *Requires `llama-cpp-python >= 0.3.16`*
-  ```bash
-  $env:CMAKE_ARGS="-DGGML_CUDA=on"
-  uv pip install "llama-cpp-python>=0.3.16" --force-reinstall --no-cache-dir
-  ```
+---
 
 ---
 
