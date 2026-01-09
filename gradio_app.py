@@ -792,7 +792,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
             with gr.Row():
                 backbone_select = gr.Dropdown(
                     list(BACKBONE_CONFIGS.keys()), 
-                    value="VieNeu-TTS (GPU)", 
+                    value="VieNeu-TTS-0.3B (GPU)", 
                     label="🦜 Backbone"
                 )
                 codec_select = gr.Dropdown(list(CODEC_CONFIGS.keys()), value="NeuCodec (Distill)", label="🎵 Codec")
@@ -820,7 +820,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                     <div class="warning-banner-item">
                         <strong>🐆 Hệ máy GPU</strong>
                         <div class="warning-banner-content">
-                            Chọn <b>VieNeu-TTS-0.3B (GPU)</b> để x2 tốc độ (Chất lượng ~95% so với bản gốc).
+                            Chọn <b>VieNeu-TTS-0.3B (GPU)</b> để x2 tốc độ.
                         </div>
                     </div>
                 </div>
@@ -836,7 +836,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                 text_input = gr.Textbox(
                     label=f"Văn bản",
                     lines=4,
-                    value="Hà Nội, trái tim của Việt Nam, là một thành phố ngàn năm văn hiến với bề dày lịch sử và văn hóa độc đáo. Bước chân trên những con phố cổ kính quanh Hồ Hoàn Kiếm, du khách như được du hành ngược thời gian, chiêm ngưỡng kiến trúc Pháp cổ điển hòa quyện với nét kiến trúc truyền thống Việt Nam. Mỗi con phố trong khu phố cổ mang một tên gọi đặc trưng, phản ánh nghề thủ công truyền thống từng thịnh hành nơi đây như phố Hàng Bạc, Hàng Đào, Hàng Mã. Ẩm thực Hà Nội cũng là một điểm nhấn đặc biệt, từ tô phở nóng hổi buổi sáng, bún chả thơm lừng trưa hè, đến chè Thái ngọt ngào chiều thu. Những món ăn dân dã này đã trở thành biểu tượng của văn hóa ẩm thực Việt, được cả thế giới yêu mến. Người Hà Nội nổi tiếng với tính cách hiền hòa, lịch thiệp nhưng cũng rất cầu toàn trong từng chi tiết nhỏ, từ cách pha trà sen cho đến cách chọn hoa sen tây để thưởng trà.",
+                    value="Một trong những tính năng đột phá nhất của dự án này chính là khả năng trích xuất và tái tạo giọng nói (Voice Cloning) chỉ từ một đoạn âm thanh mẫu ngắn. Chỉ với vài giây âm thanh của một người nói cụ thể, hệ thống có thể học được các đặc trưng độc nhất của giọng nói đó, từ chất giọng, độ trầm bổng cho đến phong cách phát âm đặc trưng của từng vùng miền. Cho dù là giọng nam miền Bắc ấm áp, giọng nữ miền Nam ngọt ngào hay bất kỳ giọng nói đặc biệt nào, VieNeu-TTS đều có thể mô phỏng một cách ấn tượng.",
                 )
                 
                 with gr.Tabs() as tabs:

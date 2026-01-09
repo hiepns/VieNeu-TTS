@@ -386,9 +386,6 @@ class VietnameseTTSNormalizer:
         # Dashes at the start of a line (bullet points) -> comma
         text = re.sub(r'^[-–—]+\s+', ', ', text)
         
-        # Any remaining dashes (like text-to-speech) -> space
-        text = re.sub(r'[-–—]', ' ', text)
-        
         # Collapse multiple commas and surrounding spaces
         text = re.sub(r'\s*,\s*(,\s*)*', ', ', text)
         
