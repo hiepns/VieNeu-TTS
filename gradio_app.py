@@ -341,10 +341,12 @@ def load_model(backbone_choice: str, codec_choice: str, device_choice: str,
 
 # --- 2. DATA & HELPERS ---
 GGUF_ALLOWED_VOICES = [
-    "Vĩnh (nam miền Nam)",
     "Bình (nam miền Bắc)",
+    "Tuyên (nam miền Bắc)",
+    "Vĩnh (nam miền Nam)",
+    "Đoan (nữ miền Nam)",
+    "Ly (nữ miền Bắc)",
     "Ngọc (nữ miền Bắc)",
-    "Dung (nữ miền Nam)",
 ]
 
 def get_voice_options(backbone_choice: str):
@@ -851,7 +853,9 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                         gr.Examples(
                             examples=[
                                 [os.path.join("examples", "audio_ref", "example.wav"), "Ví dụ 2. Tính trung bình của dãy số."],
-                                [os.path.join("examples", "audio_ref", "example_2.wav"), "Trên thực tế, các nghi ngờ đã bắt đầu xuất hiện."]
+                                [os.path.join("examples", "audio_ref", "example_2.wav"), "Trên thực tế, các nghi ngờ đã bắt đầu xuất hiện."],
+                                [os.path.join("examples", "audio_ref", "example_3.wav"), "Cậu có nhìn thấy không?"],
+                                [os.path.join("examples", "audio_ref", "example_4.wav"), "Tết là dịp mọi người háo hức đón chào một năm mới với nhiều hy vọng và mong ước."]
                             ],
                             inputs=[custom_audio, custom_text],
                             label="Ví dụ mẫu để thử nghiệm clone giọng"
