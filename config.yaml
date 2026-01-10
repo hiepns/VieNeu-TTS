@@ -55,14 +55,6 @@ voice_samples:
     audio: ./sample/Bình (nam miền Bắc).wav
     text: ./sample/Bình (nam miền Bắc).txt
     codes: ./sample/Bình (nam miền Bắc).pt
-  "Nguyên (nam miền Nam)":
-    audio: ./sample/Nguyên (nam miền Nam).wav
-    text: ./sample/Nguyên (nam miền Nam).txt
-    codes: ./sample/Nguyên (nam miền Nam).pt
-  "Sơn (nam miền Nam)":
-    audio: ./sample/Sơn (nam miền Nam).wav
-    text: ./sample/Sơn (nam miền Nam).txt
-    codes: ./sample/Sơn (nam miền Nam).pt
   "Đoan (nữ miền Nam)":
     audio: ./sample/Đoan (nữ miền Nam).wav
     text: ./sample/Đoan (nữ miền Nam).txt
@@ -75,7 +67,3 @@ voice_samples:
     audio: ./sample/Ly (nữ miền Bắc).wav
     text: ./sample/Ly (nữ miền Bắc).txt
     codes: ./sample/Ly (nữ miền Bắc).pt
-  "Dung (nữ miền Nam)":
-    audio: ./sample/Dung (nữ miền Nam).wav
-    text: ./sample/Dung (nữ miền Nam).txt
-    codes: ./sample/Dung (nữ miền Nam).pt
