@@ -61,9 +61,9 @@ def download_sample_data(output_dir="finetune/dataset", num_samples=10):
     print("\nBạn có thể kiểm tra file metadata.csv để xem cấu trúc.")
 
 if __name__ == "__main__":
-    target_dir = os.path.join("finetune", "dataset")
+    # Luôn xác định đường dẫn tương đương với thư mục gốc của project
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(script_dir))
+    target_dir = os.path.join(project_root, "finetune", "dataset")
     
-    if not os.path.exists(target_dir):
-         target_dir = os.path.join("..", "dataset")
-         
     download_sample_data(output_dir=target_dir, num_samples=7000)

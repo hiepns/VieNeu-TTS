@@ -92,4 +92,9 @@ def filter_and_process_dataset(dataset_dir="finetune/dataset"):
     print(f"\n✅ Đã lưu metadata sạch tại: {cleaned_metadata_path}")
 
 if __name__ == "__main__":
-    filter_and_process_dataset()
+    # Luôn xác định đường dẫn tương đương với thư mục gốc của project
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(script_dir))
+    target_dir = os.path.join(project_root, "finetune", "dataset")
+    
+    filter_and_process_dataset(dataset_dir=target_dir)

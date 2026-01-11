@@ -92,4 +92,9 @@ def encode_dataset(dataset_dir="finetune/dataset", max_samples=2000):
     print(f"   - Số file lỗi/bỏ qua: {skipped_count}")
 
 if __name__ == "__main__":
-    encode_dataset()
+    # Luôn xác định đường dẫn tương đương với thư mục gốc của project
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(script_dir))
+    target_dir = os.path.join(project_root, "finetune", "dataset")
+    
+    encode_dataset(dataset_dir=target_dir)
