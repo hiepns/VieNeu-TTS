@@ -72,7 +72,27 @@ VieNeu-TTS delivers production-ready speech synthesis fully offline.
 - [x] Release datasets (1000h and 140h)
 - [x] Enable streaming on GPU
 - [x] Provide Dockerized setup
-- [ ] Release fine-tuning code
+- [x] Release fine-tuning code (LoRA)
+- [x] LoRA Adapter integration in Gradio
+
+---
+
+## 🌟 New Feature: LoRA Adapters
+
+VieNeu-TTS now officially supports **LoRA (Low-Rank Adaptation)**. This allows you to:
+- Use custom fine-tuned voices from Hugging Face.
+- Achieve much higher quality and similarity than zero-shot voice cloning.
+- Switch between different adapters seamlessly in the Gradio UI.
+
+For more details, see [docs/LORA_USAGE.md](docs/LORA_USAGE.md).
+
+---
+
+## 🛠️ Fine-tuning
+
+You can now train VieNeu-TTS on your own voice dataset! 
+- **Simple Workflow**: Follow the step-by-step guide in [finetune/README.md](finetune/README.md).
+- **Notebook Support**: Use `finetune/finetune_VieNeu-TTS.ipynb` for an interactive experience.
 
 ---
 
@@ -189,37 +209,22 @@ For detailed deployment instructions, including production setup, see [docs/Depl
 
 ```
 VieNeu-TTS/
-├── examples/
-│   ├── infer_long_text.py     # CLI for long-form synthesis (chunked)
-│   └── sample_long_text.txt   # Example paragraph for testing
-├── gradio_app.py              # Local Gradio web demo with LMDeploy support
-├── main.py                    # Basic batch inference script
-├── config.yaml                # Configuration for models, codecs, and voices
-├── output_audio/              # Generated audio (created when running scripts)
-├── sample/                    # Reference voices (audio + transcript + codes)
-│   ├── Bình (nam miền Bắc).wav/txt/pt
-│   ├── Đoan (nữ miền Nam).wav/txt/pt
-│   ├── Dung (nữ miền Nam).wav/txt/pt
-│   ├── Hương (nữ miền Bắc).wav/txt/pt
-│   ├── Ly (nữ miền Bắc).wav/txt/pt
-│   ├── Ngọc (nữ miền Bắc).wav/txt/pt
-│   ├── Nguyên (nam miền Nam).wav/txt/pt
-│   ├── Sơn (nam miền Nam).wav/txt/pt
-│   ├── Tuyên (nam miền Bắc).wav/txt/pt
-│   └── Vĩnh (nam miền Nam).wav/txt/pt
-├── utils/
-│   ├── __init__.py
-│   ├── core_utils.py          # Text chunking utilities
-│   ├── normalize_text.py      # Vietnamese text normalization pipeline
-│   ├── phonemize_text.py      # Text to phoneme conversion
-│   └── phoneme_dict.json      # Phoneme dictionary
-├── vieneu_tts/
-│   ├── __init__.py            # Exports VieNeuTTS and FastVieNeuTTS
-│   └── vieneu_tts.py          # Core VieNeuTTS implementation (VieNeuTTS & FastVieNeuTTS)
-├── README.md
-├── requirements.txt           # Basic dependencies (legacy)
-├── pyproject.toml             # Project configuration with full dependencies (UV)
-└── uv.lock                    # UV lock file for dependency management
+├── vieneu_tts/            # Core engine implementation (VieNeuTTS & FastVieNeuTTS)
+├── finetune/              # LoRA training pipeline
+│   ├── configs/           # Training & LoRA configurations
+│   ├── data_scripts/      # Data filtering & VQ encoding tools
+│   ├── dataset/           # Training data storage
+│   ├── output/            # Saved checkpoints & LoRA adapters
+│   └── train.py           # Main training script
+├── utils/                 # Text normalization and phonemization logic
+├── sample/                # Built-in reference voices (audio + transcript + codes)
+├── docs/                  # Detailed documentation for LoRA, Deployment, and Docker
+├── examples/              # Usage examples and testing audio references
+├── gradio_app.py          # Modern Web UI with LoRA & Streaming support
+├── config.yaml            # Model, Codec, and Voice registry
+├── pyproject.toml         # Dependency management (UV/PIP)
+├── Makefile               # Shortcuts for setup and execution
+└── docker-compose.yml     # Docker orchestration for CPU/GPU modes
 ```
 
 ---
@@ -229,8 +234,9 @@ VieNeu-TTS/
 - [GitHub Repository](https://github.com/pnnbao97/VieNeu-TTS)
 - [Hugging Face Model (0.5B)](https://huggingface.co/pnnbao-ump/VieNeu-TTS)
 - [Hugging Face Model (0.3B)](https://huggingface.co/pnnbao-ump/VieNeu-TTS-0.3B)
-- [VieNeuTTS Fine-tuning Guide](https://github.com/pnnbao-ump/VieNeuTTS/blob/main/finetune.ipynb)
-- [VieNeuCodec dataset](https://huggingface.co/datasets/pnnbao-ump/VieNeuCodec-dataset)
+- [LoRA Usage Guide](docs/LORA_USAGE.md)
+- [Fine-tuning Guide](finetune/README.md)
+- [VieNeu-TTS-1000h dataset](https://huggingface.co/datasets/pnnbao-ump/VieNeu-TTS-1000h)
 
 ---
 

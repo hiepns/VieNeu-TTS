@@ -10,3 +10,7 @@ wheels/
 .venv
 output_audio/
 .env
+
+# Finetune Data & Checkpoints
+finetune/dataset/
+finetune/output/

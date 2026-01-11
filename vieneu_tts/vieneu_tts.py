@@ -193,6 +193,71 @@ class VieNeuTTS:
                 self._is_onnx_codec = True
             case _:
                 raise ValueError(f"Unsupported codec repository: {codec_repo}")
+    
+    def load_lora_adapter(self, lora_repo_id: str, hf_token: str = None):
+        """
+        Load LoRA adapter.
+        """
+        if self._is_quantized_model:
+            raise NotImplementedError("LoRA not supported for GGUF quantized models. Use PyTorch backbone.")
+        
+        try:
+            from peft import PeftModel
+        except ImportError as e:
+            raise ImportError("PEFT library required for LoRA. Install with: pip install peft")
+        
+        print(f"🎯 Loading LoRA adapter from: {lora_repo_id}")
+        
+        # Save original clean backbone reference if not already saved
+        if not hasattr(self, '_lora_loaded') or not self._lora_loaded:
+            self._current_lora_repo = None
+            self._lora_loaded = False
+        
+        # If LoRA already loaded, unload it first to start from a clean base
+        if self._lora_loaded:
+            self.unload_lora_adapter()
+        
+        try:
+            # Load LoRA adapter (we keep it as a PeftModel, NO merging to allow reversal)
+            self.backbone = PeftModel.from_pretrained(
+                self.backbone,
+                lora_repo_id,
+                token=hf_token
+            )
+            self._lora_loaded = True
+            self._current_lora_repo = lora_repo_id
+            
+            print(f"   ✅ LoRA adapter loaded: {lora_repo_id}")
+            return True
+            
+        except Exception as e:
+            raise RuntimeError(f"Failed to load LoRA adapter: {str(e)}") from e
+    
+    def unload_lora_adapter(self):
+        """
+        Unload LoRA adapter and restore original backbone weights using PEFT's unload().
+        """
+        if not hasattr(self, '_lora_loaded') or not self._lora_loaded:
+            return False
+        
+        print(f"   🔄 Unloading LoRA adapter: {self._current_lora_repo}")
+        
+        try:
+            # PEFT's unload() removes the lora layers and returns the clean base model
+            self.backbone = self.backbone.unload()
+            self._lora_loaded = False
+            self._current_lora_repo = None
+            
+            # Cleanup memory
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            
+            print("   ✅ LoRA adapter unloaded, original weights restored")
+            return True
+        except Exception as e:
+            print(f"   ⚠️ Error during unload: {e}")
+            return False
 
     def encode_reference(self, ref_audio_path: str | Path):
         """Encode reference audio to codes"""

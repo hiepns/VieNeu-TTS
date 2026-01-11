@@ -377,8 +377,9 @@ def load_reference_info(voice_choice: str) -> Tuple[Optional[str], str]:
     return None, ""
 
 def synthesize_speech(text: str, voice_choice: str, custom_audio, custom_text: str, 
-                     mode_tab: str, generation_mode: str, use_batch: bool, max_batch_size_run: int):
-    """Synthesis with optimization support and max batch size control"""
+                     mode_tab: str, generation_mode: str, use_batch: bool, max_batch_size_run: int,
+                     lora_repo_id: str, lora_hf_token: str, lora_audio, lora_text: str):
+    """Synthesis with optimization support, max batch size control, and LoRA adapter support"""
     global tts, current_backbone, current_codec, model_loaded, using_lmdeploy
     
     if not model_loaded or tts is None:
@@ -394,8 +395,84 @@ def synthesize_speech(text: str, voice_choice: str, custom_audio, custom_text: s
     codec_config = CODEC_CONFIGS[current_codec]
     use_preencoded = codec_config['use_preencoded']
     
-    # Setup Reference
-    if mode_tab == "custom_mode":
+    # Handle LoRA mode
+    lora_loaded = False
+    if hasattr(tts, '_lora_loaded') and tts._lora_loaded:
+        lora_loaded = True
+
+    # If not in LoRA mode but a LoRA is loaded, unload it now to prevent conflicts
+    if mode_tab != "lora_mode" and lora_loaded:
+        yield None, "🔄 Đang dọn dẹp LoRA adapter để quay về model gốc..."
+        try:
+            tts.unload_lora_adapter()
+            lora_loaded = False
+        except Exception as e:
+            print(f"Error unloading LoRA: {e}")
+
+    if mode_tab == "lora_mode":
+        # Check if using LMDeploy backend
+        if using_lmdeploy:
+            yield None, (
+                "❌ LoRA adapter không hỗ trợ LMDeploy backend!\n\n"
+                "💡 Giải pháp:\n"
+                "1. Bỏ tick '🚀 Optimize with LMDeploy' ở phần cấu hình\n"
+                "2. Click '🔄 Tải Model' lại\n"
+                "3. Quay lại tab LoRA và thử lại\n\n"
+                "📝 Lưu ý: Khi dùng LoRA, tốc độ sẽ chậm hơn LMDeploy. Hoặc bạn có thể cân nhắc merge LoRA vào model gốc rồi dùng LMDeploy để tối ưu tốc độ."
+            )
+            return
+        
+        if not lora_repo_id or not lora_repo_id.strip():
+            yield None, "⚠️ Vui lòng nhập HuggingFace Repo ID của LoRA adapter!"
+            return
+        
+        if not lora_audio or not lora_text or not lora_text.strip():
+            yield None, "⚠️ Thiếu Audio hoặc Text reference từ tập train của LoRA!"
+            return
+        
+        # Only load if not already loaded or if repo changed
+        current_lora = getattr(tts, '_current_lora_repo', None)
+        if not lora_loaded or current_lora != lora_repo_id:
+            yield None, f"📦 Đang tải LoRA adapter từ {lora_repo_id}..."
+            try:
+                # Use the new load_lora_adapter method from VieNeuTTS class
+                hf_token = lora_hf_token.strip() if lora_hf_token and lora_hf_token.strip() else None
+                tts.load_lora_adapter(lora_repo_id, hf_token=hf_token)
+                lora_loaded = True
+                yield None, "✅ LoRA adapter loaded! Đang xử lý..."
+            except NotImplementedError as e:
+                yield None, f"❌ {str(e)}\n\nVui lòng chọn backbone PyTorch (VieNeu-TTS hoặc VieNeu-TTS-0.3B GPU), không dùng GGUF."
+                return
+            except RuntimeError as e:
+                error_msg = str(e)
+                # Detect backbone mismatch
+                suggestion = ""
+                if "size mismatch" in error_msg.lower() or "shape" in error_msg.lower():
+                    current_backbone_name = BACKBONE_CONFIGS[current_backbone]['repo']
+                    suggestion = (
+                        f"\n\n💡 **Có thể do backbone không khớp!**\n"
+                        f"- Backbone hiện tại: `{current_backbone_name}`\n"
+                        f"- Hãy kiểm tra LoRA repo của bạn được train trên model nào\n"
+                        f"- Nếu train trên VieNeu-TTS-0.3B → Chọn **VieNeu-TTS-0.3B (GPU)**\n"
+                        f"- Nếu train trên VieNeu-TTS (0.5B) → Chọn **VieNeu-TTS (GPU)**"
+                    )
+                yield None, f"❌ Lỗi khi tải LoRA adapter: {error_msg}{suggestion}"
+                return
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                yield None, f"❌ Lỗi khi tải LoRA adapter: {str(e)}\n\nKiểm tra:\n- Repo ID có đúng không?\n- Token có hợp lệ không (nếu private)?"
+                return
+        else:
+            yield None, f"✅ Sử dụng LoRA đã load: {lora_repo_id}"
+        
+        # Use LoRA reference audio/text
+        ref_audio_path = lora_audio
+        ref_text_raw = lora_text
+        ref_codes_path = None
+        
+    # Setup Reference (non-LoRA modes)
+    elif mode_tab == "custom_mode":
         if custom_audio is None or not custom_text:
             yield None, "⚠️ Thiếu Audio hoặc Text mẫu custom."
             return
@@ -498,11 +575,15 @@ def synthesize_speech(text: str, voice_choice: str, custom_audio, custom_text: s
             backend_info = f" (Backend: {'LMDeploy 🚀' if using_lmdeploy else 'Standard 📦'})"
             speed_info = f", Tốc độ: {len(final_wav)/sr/process_time:.2f}x realtime" if process_time > 0 else ""
             
-            yield output_path, f"✅ Hoàn tất! (Thời gian: {process_time:.2f}s{speed_info}){backend_info}"
+            # LoRA info
+            lora_info = f" [LoRA: {lora_repo_id}]" if lora_loaded else ""
+            
+            yield output_path, f"✅ Hoàn tất! (Thời gian: {process_time:.2f}s{speed_info}){backend_info}{lora_info}"
             
             # Cleanup memory
             if using_lmdeploy and hasattr(tts, 'cleanup_memory'):
                 tts.cleanup_memory()
+            
             cleanup_gpu_memory()
             
         except torch.cuda.OutOfMemoryError as e:
@@ -628,11 +709,14 @@ def synthesize_speech(text: str, voice_choice: str, custom_audio, custom_text: s
             final_wav = np.concatenate(full_audio_buffer)
             with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
                 sf.write(tmp.name, final_wav, sr)
-                yield tmp.name, f"✅ Hoàn tất Streaming! ({backend_info})"
+                
+                lora_info = f" [LoRA: {lora_repo_id}]" if lora_loaded else ""
+                yield tmp.name, f"✅ Hoàn tất Streaming! ({backend_info}){lora_info}"
             
             # Cleanup memory
             if using_lmdeploy and hasattr(tts, 'cleanup_memory'):
                 tts.cleanup_memory()
+            
             cleanup_gpu_memory()
 
 
@@ -671,10 +755,14 @@ css = """
     color: white;
 }
 .status-box {
-    font-weight: bold;
+    font-weight: 500;
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    background: rgba(99, 102, 241, 0.03);
+    border-radius: 8px;
+}
+.status-box textarea {
     text-align: center;
-    border: none;
-    background: transparent;
+    font-family: inherit;
 }
 .model-card-content {
     display: flex;
@@ -860,6 +948,69 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                             inputs=[custom_audio, custom_text],
                             label="Ví dụ mẫu để thử nghiệm clone giọng"
                         )
+                        
+                        gr.Markdown("""
+                        **💡 Mẹo nhỏ:** Nếu kết quả Zero-shot Voice Cloning chưa như ý, bạn hãy cân nhắc **Finetune (LoRA)** để đạt chất lượng tốt nhất. 
+                        Hướng dẫn chi tiết có tại file: `finetune/README.md` hoặc xem trên [GitHub](https://github.com/pnnbao97/VieNeu-TTS/tree/main/finetune).
+                        """)
+                    
+                    with gr.TabItem("🎯 LoRA Adapter", id="lora_mode") as tab_lora:
+                        gr.Markdown("""
+                        ### 🎓 Sử dụng LoRA Adapter đã fine-tune
+                        
+                        Tải LoRA adapter từ HuggingFace để sử dụng giọng nói đã được fine-tune.
+                        
+                        ⚠️ **QUAN TRỌNG - Yêu cầu:**
+                        
+                        **1. Backbone phải khớp:**
+                        - Nếu train LoRA trên **VieNeu-TTS-0.3B** → Phải chọn backbone **VieNeu-TTS-0.3B (GPU)** ở trên
+                        - Nếu train LoRA trên **VieNeu-TTS** (0.5B) → Phải chọn backbone **VieNeu-TTS (GPU)** ở trên
+                        
+                        **2. KHÔNG dùng với:**
+                        - ❌ GGUF models (chỉ hỗ trợ PyTorch backbone)
+                        - ❌ LMDeploy optimization (bỏ tick "🚀 Optimize with LMDeploy")
+                        
+                        💡 Kiểm tra model base trong file `adapter_config.json` của LoRA repo để biết model nào được dùng.
+                        """)
+                        
+                        with gr.Row():
+                            lora_repo_id = gr.Textbox(
+                                label="🤗 HuggingFace Repo ID",
+                                placeholder="vd: pnnbao-ump/VieNeu-TTS-0.3B-lora-ngoc-huyen",
+                                value="pnnbao-ump/VieNeu-TTS-0.3B-lora-ngoc-huyen",
+                                info="Nhập repo ID của LoRA adapter trên HuggingFace"
+                            )
+                            lora_hf_token = gr.Textbox(
+                                label="🔑 HF Token (nếu repo private)",
+                                placeholder="Để trống nếu repo public",
+                                type="password",
+                                info="Token để truy cập repo private"
+                            )
+                        
+                        gr.Markdown("**📤 Upload Audio mẫu từ tập train của LoRA**")
+                        lora_audio = gr.Audio(
+                            label="Audio reference (phải là audio từ tập train của LoRA)",
+                            type="filepath",
+                            value=os.path.join("examples", "audio_ref", "example_ngoc_huyen.wav")
+                        )
+                        lora_text = gr.Textbox(
+                            label="Text tương ứng với audio reference",
+                            placeholder="Nhập chính xác nội dung của audio reference...",
+                            value="Tác phẩm dự thi bảo đảm tính khoa học, tính đảng, tính chiến đấu, tính định hướng."
+                        )
+
+                        gr.Examples(
+                            examples=[
+                                [
+                                    "pnnbao-ump/VieNeu-TTS-0.3B-lora-ngoc-huyen",
+                                    "", # hf token
+                                    os.path.join("examples", "audio_ref", "example_ngoc_huyen.wav"),
+                                    "Tác phẩm dự thi bảo đảm tính khoa học, tính đảng, tính chiến đấu, tính định hướng."
+                                ]
+                            ],
+                            inputs=[lora_repo_id, lora_hf_token, lora_audio, lora_text],
+                            label="Ví dụ mẫu LoRA Ngọc Huyền"
+                        )
 
                 
                 generation_mode = gr.Radio(
@@ -896,7 +1047,13 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
                     type="filepath",
                     autoplay=True
                 )
-                status_output = gr.Textbox(label="Trạng thái", elem_classes="status-box")
+                status_output = gr.Textbox(
+                    label="Trạng thái", 
+                    elem_classes="status-box",
+                    lines=2,
+                    max_lines=10,
+                    show_copy_button=True
+                )
                 gr.Markdown("<div style='text-align: center; color: #64748b; font-size: 0.8rem;'>🔒 Audio được đóng dấu bản quyền ẩn (Watermarker) để bảo mật và định danh AI.</div>")
         
         # # --- EVENT HANDLERS ---
@@ -921,6 +1078,7 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
         # Bind tab events to update state
         tab_preset.select(lambda: "preset_mode", outputs=current_mode_state)
         tab_custom.select(lambda: "custom_mode", outputs=current_mode_state)
+        tab_lora.select(lambda: "lora_mode", outputs=current_mode_state)
         
         btn_load.click(
             fn=load_model,
@@ -930,7 +1088,9 @@ with gr.Blocks(theme=theme, css=css, title="VieNeu-TTS") as demo:
         
         generate_event = btn_generate.click(
             fn=synthesize_speech,
-            inputs=[text_input, voice_select, custom_audio, custom_text, current_mode_state, generation_mode, use_batch, max_batch_size_run],
+            inputs=[text_input, voice_select, custom_audio, custom_text, current_mode_state, 
+                    generation_mode, use_batch, max_batch_size_run,
+                    lora_repo_id, lora_hf_token, lora_audio, lora_text],
             outputs=[audio_output, status_output]
         )
         
