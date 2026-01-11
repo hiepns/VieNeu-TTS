@@ -1,4 +1,4 @@
-# 🛠️ Hướng dẫn Fine-tune VieNeu-TTS (LoRA)
+# 🦜 Hướng dẫn Fine-tune VieNeu-TTS (LoRA)
 
 Thư mục này chứa toàn bộ công cụ cần thiết để bạn huấn luyện (fine-tune) mô hình VieNeu-TTS với giọng nói của riêng mình bằng phương pháp **LoRA (Low-Rank Adaptation)**.
 
@@ -72,7 +72,7 @@ Sau khi huấn luyện xong, bạn sẽ có các file adapter (vd: `adapter_mode
 
 ---
 
-## 💡 Bí kíp để giọng nói hay (Tips)
+## 🦜 Bí kíp để giọng nói hay (Tips)
 
 1.  **Chất lượng Audio**: Đây là yếu tố quan trọng nhất. Audio phải sạch, không có tiếng vang (reverb), không có nhạc nền hoặc tiếng ồn.
 2.  **Nội dung đa dạng**: Cố gắng có đa dạng các loại câu (câu hỏi, câu cảm thán, câu khẳng định) để mô hình học được biểu cảm.
