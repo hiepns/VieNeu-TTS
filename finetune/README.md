@@ -18,7 +18,7 @@ uv sync
 
 ### 1. Chuẩn bị dữ liệu (`dataset/`)
 Bạn cần chuẩn bị:
-- Thư mục `finetune/dataset/raw_audio/`: Chứa các file âm thanh (.wav) của người nói (khoảng 10-30 phút là tốt nhất).
+- Thư mục `finetune/dataset/raw_audio/`: Chứa các file âm thanh (.wav) của người nói. Độ dài mỗi file nên trong khoảng từ 3-15 giây để chất lượng finetune đạt tối đa. Theo kinh nghiệm của chúng tôi, tổng thời lượng nên trong khoảng từ 2-4 giờ để model có thể học hết các đặc điểm của giọng mẫu.
 - File `finetune/dataset/metadata.csv`: Chứa thông tin văn bản tương ứng với audio. Định dạng: `file_name|text` (ví dụ: `audio_001.wav|Xin chào Việt Nam.`).
 
 *Mẹo: Nếu chưa có dữ liệu, bạn có thể chạy `uv run python finetune/data_scripts/get_hf_sample.py` để tải dữ liệu mẫu.*
@@ -41,8 +41,8 @@ Chạy các script sau theo thứ tự:
 ### 3. Cấu hình huấn luyện (`configs/lora_config.py`)
 Mở file `finetune/configs/lora_config.py` để điều chỉnh các thông số:
 - `model`: Chọn base model (vd: `pnnbao-ump/VieNeu-TTS-0.3B`).
-- `max_steps`: Số bước huấn luyện (mặc định 1000-2000 là đủ cho giọng đơn lẻ).
-- `learning_rate`: Tốc độ học (thường là `2e-4` hoặc `1e-4`).
+- `max_steps`: Số bước huấn luyện (mặc định 5000 là đủ cho giọng đơn lẻ).
+- `learning_rate`: Tốc độ học (mặc định là `2e-4`).
 
 ### 4. Bắt đầu Huấn luyện (`train.py`)
 Chạy script huấn luyện chính:
