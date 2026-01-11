@@ -2,6 +2,16 @@
 
 Thư mục này chứa toàn bộ công cụ cần thiết để bạn huấn luyện (fine-tune) mô hình VieNeu-TTS với giọng nói của riêng mình bằng phương pháp **LoRA (Low-Rank Adaptation)**.
 
+## ⚙️ Cài đặt (Setup)
+
+Nếu bạn chưa có sẵn mã nguồn, hãy thực hiện cài đặt môi trường:
+
+```bash
+git clone https://github.com/pnnbao97/VieNeu-TTS.git
+cd VieNeu-TTS
+uv sync
+```
+
 ## 📋 Quy trình huấn luyện (Workflow)
 
 Để đạt được kết quả tốt nhất, bạn cần đi qua các bước sau:
@@ -11,20 +21,20 @@ Bạn cần chuẩn bị:
 - Thư mục `finetune/dataset/raw_audio/`: Chứa các file âm thanh (.wav) của người nói (khoảng 10-30 phút là tốt nhất).
 - File `finetune/dataset/metadata.csv`: Chứa thông tin văn bản tương ứng với audio. Định dạng: `file_name|text` (ví dụ: `audio_001.wav|Xin chào Việt Nam.`).
 
-*Mẹo: Nếu chưa có dữ liệu, bạn có thể chạy `python data_scripts/get_hf_sample.py` để tải dữ liệu mẫu.*
+*Mẹo: Nếu chưa có dữ liệu, bạn có thể chạy `uv run python data_scripts/get_hf_sample.py` để tải dữ liệu mẫu.*
 
 ### 2. Tiền xử lý và Làm sạch dữ liệu
 Chạy các script sau theo thứ tự:
 
 1.  **Lọc dữ liệu (`filter_data.py`)**: Loại bỏ các đoạn âm thanh quá ngắn, quá dài hoặc văn bản chứa ký tự không hợp lệ.
     ```bash
-    python data_scripts/filter_data.py
+    uv run python data_scripts/filter_data.py
     ```
     *Kết quả: Tạo ra file `metadata_cleaned.csv`.*
 
 2.  **Mã hóa âm thanh (`encode_data.py`)**: Chuyển đổi audio sang dạng mã hóa của NeuCodec để mô hình LLM có thể học được.
     ```bash
-    python data_scripts/encode_data.py
+    uv run python data_scripts/encode_data.py
     ```
     *Kết quả: Tạo ra file `metadata_encoded.csv`.*
 
@@ -37,7 +47,7 @@ Mở file `finetune/configs/lora_config.py` để điều chỉnh các thông s�
 ### 4. Bắt đầu Huấn luyện (`train.py`)
 Chạy script huấn luyện chính:
 ```bash
-python train.py
+uv run python train.py
 ```
 Mô hình sẽ được lưu định kỳ vào thư mục `finetune/output/`.
 
